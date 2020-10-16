@@ -200,7 +200,10 @@ namespace GbSharp.Cpu
                 case 0x17: return Rla();
 
                 // DAA
-                // case 0x37: ...;
+                // case 0x27: ...;
+
+                // SCF
+                case 0x37: return Scf();
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -559,6 +562,17 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry, seventhBit == 1);
 
             A = (byte)((A << 1) | carry);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// SCF
+        /// </summary>
+        /// <returns></returns>
+        private int Scf()
+        {
+            SetFlag(CpuFlag.Carry);
 
             return 1;
         }
