@@ -69,7 +69,7 @@ namespace GbSharp.Cpu
             F ^= (byte)(1 << (int)flag);
         }
 
-        private void SetHalfCarry(byte prev, byte now, bool addition)
+        private void SetHalfCarry(byte baseVal, byte operand, bool addition)
         {
             if (addition)
             {
@@ -86,7 +86,7 @@ namespace GbSharp.Cpu
                 // 
                 // An easy way to check this is to see if the sum of the first
                 // nybbles of the operands exceeds 0xF.
-                if ((prev & 0xF + now & 0xF) > 0xF)
+                if ((baseVal & 0xF + operand & 0xF) > 0xF)
                 {
                     SetFlag(CpuFlag.HalfCarry);
                 }
@@ -324,12 +324,12 @@ namespace GbSharp.Cpu
             {
                 ClearFlag(CpuFlag.Negative);
 
-                byte prev = MemoryMap.Read(pair.Value);
-                byte now = (byte)(prev + 1);
+            byte baseVal = MemoryMap.Read(pair.Value);
+            byte sum = (byte)(baseVal + 1);
 
-                SetHalfCarry(prev, now, true);
+            SetHalfCarry(baseVal, 1, true);
 
-                if (now == 0)
+            if (sum == 0)
                 {
                     SetFlag(CpuFlag.Zero);
                 }
@@ -338,7 +338,7 @@ namespace GbSharp.Cpu
                     ClearFlag(CpuFlag.Zero);
                 }
 
-                MemoryMap.Write(pair.Value, now);
+            MemoryMap.Write(pair.Value, sum);
 
                 return 3;
             }
@@ -363,8 +363,8 @@ namespace GbSharp.Cpu
         {
             ClearFlag(CpuFlag.Negative);
 
-            byte prev = register++;
-            SetHalfCarry(prev, register, true);
+            byte baseVal = register++;
+            SetHalfCarry(baseVal, 1, true);
 
             if (register == 0)
             {
