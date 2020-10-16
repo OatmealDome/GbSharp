@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -149,9 +149,9 @@ namespace GbSharp.Cpu
                 // STOP
                 // case 0x10: ...;
 
-                // JR
-                // case 0x20: ...;
-                // case 0x30: ...;
+                // JR Nf, s8
+                case 0x20: return Jr(CpuFlag.Zero, false);
+                case 0x30: return Jr(CpuFlag.Carry, false);
 
                 // LD pair, u16
                 case 0x01: return Ld(BC);
@@ -207,6 +207,13 @@ namespace GbSharp.Cpu
 
                 // LD (u16), SP
                 case 0x08: return LdSpToAddress();
+
+                // JR s8
+                case 0x18: return Jr();
+
+                // JR f, s8
+                case 0x28: return Jr(CpuFlag.Zero, true);
+                case 0x38: return Jr(CpuFlag.Carry, true);
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -303,6 +310,39 @@ namespace GbSharp.Cpu
         private int Nop()
         {
             return 1;
+        }
+
+        /// <summary>
+        /// JR s8
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Jr()
+        {
+            sbyte offset = (sbyte)AdvancePC();
+            PC = (ushort)(PC + offset);
+
+            return 3;
+        }
+
+        /// <summary>
+        /// JR Cf, s8
+        /// </summary>
+        /// <param name="flag">The CpuFlag to check.</param>
+        /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Jr(CpuFlag flag, bool setTo)
+        {
+            sbyte offset = (sbyte)AdvancePC();
+            bool flagValue = CheckFlag(flag);
+
+            if (setTo == flagValue)
+            {
+                PC = (ushort)(PC + offset);
+
+                return 3;
+            }
+
+            return 2;
         }
 
         /// <summary>
