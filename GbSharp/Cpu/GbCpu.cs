@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -42,7 +42,12 @@ namespace GbSharp.Cpu
 
         private bool CheckFlag(CpuFlag flag)
         {
-            return (F >> (int)flag) == 1;
+            // for example, checking Carry:
+            // F      1001 0000
+            // mask   0001 0000
+            // AND    0001 0000
+            int mask = (1 << (int)flag);
+            return (F & mask) == mask;
         }
 
         private void ClearFlag(CpuFlag flag)
