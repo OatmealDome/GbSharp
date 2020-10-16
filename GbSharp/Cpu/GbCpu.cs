@@ -243,7 +243,7 @@ namespace GbSharp.Cpu
         {
             pair.Value++;
 
-            return 1;
+            return 2;
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace GbSharp.Cpu
         {
             SP++;
 
-            return 1;
+            return 2;
         }
 
     }
