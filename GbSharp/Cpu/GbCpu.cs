@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -97,7 +97,27 @@ namespace GbSharp.Cpu
             }
             else
             {
-                // TODO
+                // The half carry flag is set if there is a borrow from bit 4
+                // to bit 3. For example:
+                //
+                //      - 1
+                //   0001 0000
+                // - 0000 1000
+                // -----------
+                //   0000 1000
+                // 
+                // An easy way to check this is to see subtract the operands
+                // from each other, and then check for an underflow.
+                sbyte one = (sbyte)(baseVal & 0xF);
+                sbyte two = (sbyte)(operand & 0xF);
+                if (one - two < 0)
+                {
+                    SetFlag(CpuFlag.HalfCarry);
+                }
+                else
+                {
+                    ClearFlag(CpuFlag.HalfCarry);
+                }
             }
         }
 
@@ -145,6 +165,12 @@ namespace GbSharp.Cpu
 
                 // INC (HL)
                 case 0x34: return IncPtr(HL);
+
+                // DEC x
+                case 0x05: return Dec(ref BC.High);
+                case 0x15: return Dec(ref DE.High);
+                case 0x25: return Dec(ref HL.High);
+                case 0x35: return DecPtr(HL);
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -321,8 +347,8 @@ namespace GbSharp.Cpu
         /// <param name="pair">The RegisterPair containing the memory pointer to increment.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int IncPtr(RegisterPair pair)
-            {
-                ClearFlag(CpuFlag.Negative);
+        {
+            ClearFlag(CpuFlag.Negative);
 
             byte baseVal = MemoryMap.Read(pair.Value);
             byte sum = (byte)(baseVal + 1);
@@ -330,18 +356,18 @@ namespace GbSharp.Cpu
             SetHalfCarry(baseVal, 1, true);
 
             if (sum == 0)
-                {
-                    SetFlag(CpuFlag.Zero);
-                }
-                else
-                {
-                    ClearFlag(CpuFlag.Zero);
-                }
+            {
+                SetFlag(CpuFlag.Zero);
+            }
+            else
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
 
             MemoryMap.Write(pair.Value, sum);
 
-                return 3;
-            }
+            return 3;
+        }
 
         /// <summary>
         /// INC SP
@@ -365,6 +391,81 @@ namespace GbSharp.Cpu
 
             byte baseVal = register++;
             SetHalfCarry(baseVal, 1, true);
+
+            if (register == 0)
+            {
+                SetFlag(CpuFlag.Zero);
+            }
+            else
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
+
+            return 1;
+        }
+
+        /// <summary>
+        /// DEC pair
+        /// </summary>
+        /// <param name="pair">The RegisterPair to decrement.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int DecPair(RegisterPair pair)
+        {
+            pair.Value--;
+
+            return 2;
+        }
+
+        /// <summary>
+        /// DEC (pair)
+        /// </summary>
+        /// <param name="pair">The RegisterPair containing the memory pointer to decrement.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int DecPtr(RegisterPair pair)
+        {
+            SetFlag(CpuFlag.Negative);
+
+            byte baseVal = MemoryMap.Read(pair.Value);
+            byte difference = (byte)(baseVal - 1);
+
+            SetHalfCarry(baseVal, 1, false);
+
+            if (difference == 0)
+            {
+                SetFlag(CpuFlag.Zero);
+            }
+            else
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
+
+            MemoryMap.Write(pair.Value, difference);
+
+            return 3;
+        }
+
+        /// <summary>
+        /// DEC SP
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int DecSp()
+        {
+            SP++;
+
+            return 2;
+        }
+
+        /// <summary>
+        /// DEC x
+        /// </summary>
+        /// <param name="register">The register to decrement.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Dec(ref byte register)
+        {
+            SetFlag(CpuFlag.Negative);
+
+            byte baseVal = register--;
+            SetHalfCarry(baseVal, 1, false);
 
             if (register == 0)
             {
