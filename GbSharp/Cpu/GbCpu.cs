@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -64,6 +64,38 @@ namespace GbSharp.Cpu
             F ^= (byte)(1 << (int)flag);
         }
 
+        private void SetHalfCarry(byte prev, byte now, bool addition)
+        {
+            if (addition)
+            {
+                // The half carry flag is set if there is a carry from bit 3
+                // to bit 4. For example:
+                //
+                //      1
+                //   0000 1000
+                // + 0000 1000
+                // -----------
+                //   0001 0000
+                //
+                // In this addition operation, the half carry flag will be set.
+                // 
+                // An easy way to check this is to see if the sum of the first
+                // nybbles of the operands exceeds 0xF.
+                if ((prev & 0xF + now & 0xF) > 0xF)
+                {
+                    SetFlag(CpuFlag.HalfCarry);
+                }
+                else
+                {
+                    ClearFlag(CpuFlag.HalfCarry);
+                }
+            }
+            else
+            {
+                // TODO
+            }
+        }
+
         /// <summary>
         /// Advances the CPU by one instruction.
         /// </summary>
@@ -100,6 +132,14 @@ namespace GbSharp.Cpu
                 case 0x13: return Inc(DE);
                 case 0x23: return Inc(HL);
                 case 0x33: return Inc();
+
+                // INC x
+                case 0x04: return Inc(ref BC.High);
+                case 0x14: return Inc(ref DE.High);
+                case 0x24: return Inc(ref HL.High);
+
+                // INC (HL)
+                case 0x34: return Inc(HL, true);
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -259,15 +299,41 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// INC pair
+        /// INC pair, INC (pair)
         /// </summary>
         /// <param name="pair">The RegisterPair to increment.</param>
+        /// <param name="pointer">If this RegisterPair should be treated as a memory pointer.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Inc(RegisterPair pair)
+        private int Inc(RegisterPair pair, bool pointer = false)
         {
-            pair.Value++;
+            if (pointer)
+            {
+                ClearFlag(CpuFlag.Negative);
 
-            return 2;
+                byte prev = MemoryMap.Read(pair.Value);
+                byte now = (byte)(prev + 1);
+
+                SetHalfCarry(prev, now, true);
+
+                if (now == 0)
+                {
+                    SetFlag(CpuFlag.Zero);
+                }
+                else
+                {
+                    ClearFlag(CpuFlag.Zero);
+                }
+
+                MemoryMap.Write(pair.Value, now);
+
+                return 3;
+            }
+            else
+            {
+                pair.Value++;
+
+                return 2;
+            }
         }
 
         /// <summary>
@@ -279,6 +345,30 @@ namespace GbSharp.Cpu
             SP++;
 
             return 2;
+        }
+
+        /// <summary>
+        /// INC x
+        /// </summary>
+        /// <param name="register">The register to increment.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Inc(ref byte register)
+        {
+            ClearFlag(CpuFlag.Negative);
+
+            byte prev = register++;
+            SetHalfCarry(prev, register, true);
+
+            if (register == 0)
+            {
+                SetFlag(CpuFlag.Zero);
+            }
+            else
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
+
+            return 1;
         }
 
     }
