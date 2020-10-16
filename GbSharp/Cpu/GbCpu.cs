@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -205,6 +205,9 @@ namespace GbSharp.Cpu
                 // SCF
                 case 0x37: return Scf();
 
+                // LD (u16), SP
+                case 0x08: return LdSpToAddress();
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
@@ -372,6 +375,18 @@ namespace GbSharp.Cpu
             register = AdvancePC();
 
             return 2;
+        }
+
+        /// <summary>
+        /// LD (u16), SP
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int LdSpToAddress()
+        {
+            MemoryMap.Write(AdvancePC(), (byte)(SP & 0xFF));
+            MemoryMap.Write(AdvancePC(), (byte)(SP >> 8));
+
+            return 5;
         }
 
         /// <summary>
