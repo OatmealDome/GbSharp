@@ -133,9 +133,9 @@ namespace GbSharp.Cpu
                 case 0x32: return Ld(A, HL, PostLdOperation.Decrement);
 
                 // INC pair
-                case 0x03: return Inc(BC);
-                case 0x13: return Inc(DE);
-                case 0x23: return Inc(HL);
+                case 0x03: return IncPair(BC);
+                case 0x13: return IncPair(DE);
+                case 0x23: return IncPair(HL);
                 case 0x33: return Inc();
 
                 // INC x
@@ -144,7 +144,7 @@ namespace GbSharp.Cpu
                 case 0x24: return Inc(ref HL.High);
 
                 // INC (HL)
-                case 0x34: return Inc(HL, true);
+                case 0x34: return IncPtr(HL);
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -304,14 +304,23 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// INC pair, INC (pair)
+        /// INC pair
         /// </summary>
         /// <param name="pair">The RegisterPair to increment.</param>
-        /// <param name="pointer">If this RegisterPair should be treated as a memory pointer.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Inc(RegisterPair pair, bool pointer = false)
+        private int IncPair(RegisterPair pair)
         {
-            if (pointer)
+            pair.Value++;
+
+            return 2;
+        }
+
+        /// <summary>
+        /// INC (pair)
+        /// </summary>
+        /// <param name="pair">The RegisterPair containing the memory pointer to increment.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int IncPtr(RegisterPair pair)
             {
                 ClearFlag(CpuFlag.Negative);
 
@@ -333,13 +342,6 @@ namespace GbSharp.Cpu
 
                 return 3;
             }
-            else
-            {
-                pair.Value++;
-
-                return 2;
-            }
-        }
 
         /// <summary>
         /// INC SP
