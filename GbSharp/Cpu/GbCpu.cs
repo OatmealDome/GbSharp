@@ -69,6 +69,19 @@ namespace GbSharp.Cpu
             F ^= (byte)(1 << (int)flag);
         }
 
+        private void SetFlag(CpuFlag flag, bool val)
+        {
+            bool currentFlag = CheckFlag(flag);
+            if (currentFlag && !val)
+            {
+                ClearFlag(flag);
+            }
+            else if (!currentFlag && val)
+            {
+                SetFlag(flag);
+            }
+        }
+
         private void SetHalfCarry(byte baseVal, byte operand, bool addition)
         {
             if (addition)
@@ -171,6 +184,23 @@ namespace GbSharp.Cpu
                 case 0x15: return Dec(ref DE.High);
                 case 0x25: return Dec(ref HL.High);
                 case 0x35: return DecPtr(HL);
+
+                // LD x, u8
+                case 0x06: return Ld(ref BC.High);
+                case 0x16: return Ld(ref DE.High);
+                case 0x26: return Ld(ref HL.High);
+
+                // LD (HL), u8
+                case 0x36: return Ld(AdvancePC(), HL) + 1;
+
+                // RLCA
+                case 0x07: return Rlca();
+                
+                // RLA
+                case 0x17: return Rla();
+
+                // DAA
+                // case 0x37: ...;
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -330,6 +360,18 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
+        /// LD x, u8
+        /// </summary>
+        /// <param name="register">The destination register.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Ld(ref byte register)
+        {
+            register = AdvancePC();
+
+            return 2;
+        }
+
+        /// <summary>
         /// INC pair
         /// </summary>
         /// <param name="pair">The RegisterPair to increment.</param>
@@ -475,6 +517,48 @@ namespace GbSharp.Cpu
             {
                 ClearFlag(CpuFlag.Zero);
             }
+
+            return 1;
+        }
+
+        /// <summary>
+        /// RLCA
+        /// 
+        /// Rotates A left and stores the seventh bit into the carry and the zeroth bit.
+        /// </summary>
+        /// <returns></returns>
+        private int Rlca()
+        {
+            ClearFlag(CpuFlag.Zero);
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            int seventhBit = A >> 7;
+            SetFlag(CpuFlag.Carry, seventhBit == 1);
+
+            A = (byte)((A << 1) | seventhBit);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// RLA
+        /// 
+        /// Rotates A left through the carry.
+        /// </summary>
+        /// <returns></returns>
+        private int Rla()
+        {
+            ClearFlag(CpuFlag.Zero);
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            int carry = CheckFlag(CpuFlag.Carry) ? 1 : 0;
+
+            int seventhBit = A >> 7;
+            SetFlag(CpuFlag.Carry, seventhBit == 1);
+
+            A = (byte)((A << 1) | carry);
 
             return 1;
         }
