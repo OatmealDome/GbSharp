@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -38,6 +38,30 @@ namespace GbSharp.Cpu
             PC++;
 
             return val;
+        }
+
+        private bool CheckFlag(CpuFlag flag)
+        {
+            return (F >> (int)flag) == 1;
+        }
+
+        private void ClearFlag(CpuFlag flag)
+        {
+            // for example, clearing Carry:
+            // F      1001 0000
+            // mask   0001 0000
+            // invert 1110 0000
+            // AND    1000 0000
+            F &= (byte)~(1 << (int)flag);
+        }
+
+        private void SetFlag(CpuFlag flag)
+        {
+            // for example, setting Carry:
+            // F    1000 0000
+            // mask 0001 0000
+            // XOR  1001 0000
+            F ^= (byte)(1 << (int)flag);
         }
 
         /// <summary>
