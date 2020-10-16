@@ -136,7 +136,7 @@ namespace GbSharp.Cpu
                 case 0x03: return IncPair(BC);
                 case 0x13: return IncPair(DE);
                 case 0x23: return IncPair(HL);
-                case 0x33: return Inc();
+                case 0x33: return IncSp();
 
                 // INC x
                 case 0x04: return Inc(ref BC.High);
@@ -347,7 +347,7 @@ namespace GbSharp.Cpu
         /// INC SP
         /// </summary>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Inc()
+        private int IncSp()
         {
             SP++;
 
