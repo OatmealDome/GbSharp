@@ -535,14 +535,7 @@ namespace GbSharp.Cpu
 
             SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(baseVal, 1, 3));
 
-            if (sum == 0)
-            {
-                SetFlag(CpuFlag.Zero);
-            }
-            else
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
+            SetFlag(CpuFlag.Zero, sum == 0);
 
             MemoryMap.Write(pair.Value, sum);
 
@@ -573,14 +566,7 @@ namespace GbSharp.Cpu
 
             SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(baseVal, 1, 3));
 
-            if (register == 0)
-            {
-                SetFlag(CpuFlag.Zero);
-            }
-            else
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
+            SetFlag(CpuFlag.Zero, register == 0);
 
             return 1;
         }
@@ -611,14 +597,7 @@ namespace GbSharp.Cpu
 
             SetFlag(CpuFlag.HalfCarry, CheckBorrowFromBit(baseVal, 1, 4));
 
-            if (difference == 0)
-            {
-                SetFlag(CpuFlag.Zero);
-            }
-            else
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
+            SetFlag(CpuFlag.Zero, difference == 0);
 
             MemoryMap.Write(pair.Value, difference);
 
@@ -649,14 +628,7 @@ namespace GbSharp.Cpu
 
             SetFlag(CpuFlag.HalfCarry, CheckBorrowFromBit(baseVal, 1, 4));
 
-            if (register == 0)
-            {
-                SetFlag(CpuFlag.Zero);
-            }
-            else
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
+            SetFlag(CpuFlag.Zero, register == 0);
 
             return 1;
         }
