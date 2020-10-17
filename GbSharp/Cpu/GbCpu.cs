@@ -264,10 +264,10 @@ namespace GbSharp.Cpu
                 case 0x36: return Ld(AdvancePC(), HL) + 1;
 
                 // RLCA
-                case 0x07: return Rlc(ref A, true);
+                case 0x07: return Rotate(RotationType.LeftCircular, ref A, true);
                 
                 // RLA
-                case 0x17: return Rl(ref A, true);
+                case 0x17: return Rotate(RotationType.Left, ref A, true);
 
                 // DAA
                 // case 0x27: ...;
@@ -322,10 +322,10 @@ namespace GbSharp.Cpu
                 case 0x3E: return Ld(ref A);
 
                 // RRCA
-                case 0x0F: return Rrc(ref A, true);
+                case 0x0F: return Rotate(RotationType.RightCircular, ref A, true);
 
                 // RRA
-                case 0x1F: return Rr(ref A, true);
+                case 0x1F: return Rotate(RotationType.Right, ref A, true);
 
                 // CPL
                 case 0x2F: return Cpl();
@@ -615,44 +615,44 @@ namespace GbSharp.Cpu
                     switch (subcode)
                     {
                         // RLC
-                        case 0x00: return Rlc(ref BC.High);
-                        case 0x01: return Rlc(ref BC.Low);
-                        case 0x02: return Rlc(ref DE.High);
-                        case 0x03: return Rlc(ref DE.Low);
-                        case 0x04: return Rlc(ref HL.High);
-                        case 0x05: return Rlc(ref HL.Low);
-                        case 0x06: return RlcHl();
-                        case 0x07: return Rlc(ref A, false); // Not RLCA
+                        case 0x00: return Rotate(RotationType.LeftCircular, ref BC.High);
+                        case 0x01: return Rotate(RotationType.LeftCircular, ref BC.Low);
+                        case 0x02: return Rotate(RotationType.LeftCircular, ref DE.High);
+                        case 0x03: return Rotate(RotationType.LeftCircular, ref DE.Low);
+                        case 0x04: return Rotate(RotationType.LeftCircular, ref HL.High);
+                        case 0x05: return Rotate(RotationType.LeftCircular, ref HL.Low);
+                        case 0x06: return RotateHl(RotationType.LeftCircular);
+                        case 0x07: return Rotate(RotationType.LeftCircular, ref A, false); // Not RLCA
 
                         // RRC
-                        case 0x08: return Rrc(ref BC.High);
-                        case 0x09: return Rrc(ref BC.Low);
-                        case 0x0A: return Rrc(ref DE.High);
-                        case 0x0B: return Rrc(ref DE.Low);
-                        case 0x0C: return Rrc(ref HL.High);
-                        case 0x0D: return Rrc(ref HL.Low);
-                        case 0x0E: return RrcHl();
-                        case 0x0F: return Rrc(ref A, false); // Not RRCA
+                        case 0x08: return Rotate(RotationType.RightCircular, ref BC.High);
+                        case 0x09: return Rotate(RotationType.RightCircular, ref BC.Low);
+                        case 0x0A: return Rotate(RotationType.RightCircular, ref DE.High);
+                        case 0x0B: return Rotate(RotationType.RightCircular, ref DE.Low);
+                        case 0x0C: return Rotate(RotationType.RightCircular, ref HL.High);
+                        case 0x0D: return Rotate(RotationType.RightCircular, ref HL.Low);
+                        case 0x0E: return RotateHl(RotationType.RightCircular);
+                        case 0x0F: return Rotate(RotationType.RightCircular, ref A, false); // Not RRCA
 
                         // RL
-                        case 0x10: return Rl(ref BC.High);
-                        case 0x11: return Rl(ref BC.Low);
-                        case 0x12: return Rl(ref DE.High);
-                        case 0x13: return Rl(ref DE.Low);
-                        case 0x14: return Rl(ref HL.High);
-                        case 0x15: return Rl(ref HL.Low);
-                        case 0x16: return RlHl();
-                        case 0x17: return Rl(ref A, false); // Not RLA
+                        case 0x10: return Rotate(RotationType.Left, ref BC.High);
+                        case 0x11: return Rotate(RotationType.Left, ref BC.Low);
+                        case 0x12: return Rotate(RotationType.Left, ref DE.High);
+                        case 0x13: return Rotate(RotationType.Left, ref DE.Low);
+                        case 0x14: return Rotate(RotationType.Left, ref HL.High);
+                        case 0x15: return Rotate(RotationType.Left, ref HL.Low);
+                        case 0x16: return RotateHl(RotationType.Left);
+                        case 0x17: return Rotate(RotationType.Left, ref A, false); // Not RLA
 
                         // RR
-                        case 0x18: return Rr(ref BC.High);
-                        case 0x19: return Rr(ref BC.Low);
-                        case 0x1A: return Rr(ref DE.High);
-                        case 0x1B: return Rr(ref DE.Low);
-                        case 0x1C: return Rr(ref HL.High);
-                        case 0x1D: return Rr(ref HL.Low);
-                        case 0x1E: return RrHl();
-                        case 0x1F: return Rr(ref A, false); // Not RRA
+                        case 0x18: return Rotate(RotationType.Right, ref BC.High);
+                        case 0x19: return Rotate(RotationType.Right, ref BC.Low);
+                        case 0x1A: return Rotate(RotationType.Right, ref DE.High);
+                        case 0x1B: return Rotate(RotationType.Right, ref DE.Low);
+                        case 0x1C: return Rotate(RotationType.Right, ref HL.High);
+                        case 0x1D: return Rotate(RotationType.Right, ref HL.Low);
+                        case 0x1E: return RotateHl(RotationType.Right);
+                        case 0x1F: return Rotate(RotationType.Right, ref A, false); // Not RRA
 
                         // SLA
                         case 0x20: return Sla(ref BC.High);
@@ -1162,54 +1162,6 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// RLC
-        /// RLCA
-        /// </summary>
-        /// <param name="register">The register to rotate.</param>
-        /// <param name="isA">If the register is the accumulator.</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Rlc(ref byte register, bool isA = false)
-        {
-            if (isA)
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
-
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            register = RlcByte(register);
-
-            if (isA)
-            {
-                return 1;
-            }
-
-            SetFlag(CpuFlag.Zero, register == 0);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// RLC (HL)
-        /// </summary>
-        /// <param name="pair">The RegisterPair containing the memory pointer of the byte to rotate</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int RlcHl()
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            byte value = RlcByte(MemoryMap.Read(HL.Value));
-
-            SetFlag(CpuFlag.Zero, value == 0);
-
-            MemoryMap.Write(HL.Value, value);
-
-            return 4;
-        }
-
-        /// <summary>
         /// Rotates the byte left through the carry.
         /// </summary>
         /// <param name="b"></param>
@@ -1225,53 +1177,6 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// RL
-        /// RLA
-        /// </summary>
-        /// <param name="register">The register to rotate.</param>
-        /// <param name="isA">If the register is the accumulator.</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Rl(ref byte register, bool isA = false)
-        {
-            if (isA)
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
-
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            register = RlByte(register);
-
-            if (isA)
-            {
-                return 1;
-            }
-
-            SetFlag(CpuFlag.Zero, register == 0);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// RL HL
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int RlHl()
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            byte value = RlByte(MemoryMap.Read(HL.Value));
-
-            SetFlag(CpuFlag.Zero, value == 0);
-
-            MemoryMap.Write(HL.Value, value);
-
-            return 2;
-        }
-
-        /// <summary>
         /// Rotates A right and stores the zeroth bit into the carry and the seventh bit.
         /// </summary>
         /// <param name="b">The byte to rotate.</param>
@@ -1282,53 +1187,6 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry, zerothBit == 1);
 
             return (byte)((b >> 1) | zerothBit << 7);
-        }
-
-        /// <summary>
-        /// RRC
-        /// RRCA
-        /// </summary>
-        /// <param name="register">The register to rotate.</param>
-        /// <param name="isA">If the register is the accumulator.</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Rrc(ref byte register, bool isA = false)
-        {
-            if (isA)
-            {
-                ClearFlag(CpuFlag.Zero);
-            }
-
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            register = RrcByte(register);
-
-            if (isA)
-            {
-                return 1;
-            }
-
-            SetFlag(CpuFlag.Zero, register == 0);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// RRC HL
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int RrcHl()
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            byte value = RrcByte(MemoryMap.Read(HL.Value));
-
-            SetFlag(CpuFlag.Zero, value == 0);
-
-            MemoryMap.Write(HL.Value, value);
-
-            return 2;
         }
 
         /// <summary>
@@ -1347,13 +1205,17 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
+        /// RLC
+        /// RLCA
+        /// RRC
+        /// RRCA
+        /// RL
         /// RR
-        /// RRA
         /// </summary>
         /// <param name="register">The register to rotate.</param>
         /// <param name="isA">If the register is the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Rr(ref byte register, bool isA = false)
+        private int Rotate(RotationType type, ref byte register, bool isA = false)
         {
             if (isA)
             {
@@ -1363,7 +1225,22 @@ namespace GbSharp.Cpu
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
 
-            register = RrByte(register);
+            if (type == RotationType.Left)
+            {
+                register = RlByte(register);
+            }
+            else if (type == RotationType.LeftCircular)
+            {
+                register = RlcByte(register);
+            }
+            else if (type == RotationType.Right)
+            {
+                register = RrByte(register);
+            }
+            else if (type == RotationType.RightCircular)
+            {
+                register = RrcByte(register);
+            }
 
             if (isA)
             {
@@ -1376,21 +1253,39 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// RR HL
+        /// RLC (HL)
         /// </summary>
+        /// <param name="pair">The RegisterPair containing the memory pointer of the byte to rotate</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int RrHl()
+        private int RotateHl(RotationType type)
         {
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
 
-            byte value = RrByte(MemoryMap.Read(HL.Value));
+            byte value = MemoryMap.Read(HL.Value);
+
+            if (type == RotationType.Left)
+            {
+                value = RlByte(value);
+            }
+            else if (type == RotationType.LeftCircular)
+            {
+                value = RlcByte(value);
+            }
+            else if (type == RotationType.Right)
+            {
+                value = RrByte(value);
+            }
+            else if (type == RotationType.RightCircular)
+            {
+                value = RrcByte(value);
+            }
 
             SetFlag(CpuFlag.Zero, value == 0);
 
             MemoryMap.Write(HL.Value, value);
 
-            return 2;
+            return 4;
         }
 
         /// <summary>
