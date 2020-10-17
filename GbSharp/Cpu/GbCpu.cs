@@ -664,6 +664,26 @@ namespace GbSharp.Cpu
                         case 0x26: return SlaHl();
                         case 0x27: return Sla(ref A);
 
+                        // SRA
+                        case 0x28: return Sra(ref BC.High);
+                        case 0x29: return Sra(ref BC.Low);
+                        case 0x2A: return Sra(ref DE.High);
+                        case 0x2B: return Sra(ref DE.Low);
+                        case 0x2C: return Sra(ref HL.High);
+                        case 0x2D: return Sra(ref HL.Low);
+                        case 0x2E: return SraHl();
+                        case 0x2F: return Sra(ref A);
+
+                        // SRL
+                        case 0x38: return Srl(ref BC.High);
+                        case 0x39: return Srl(ref BC.Low);
+                        case 0x3A: return Srl(ref DE.High);
+                        case 0x3B: return Srl(ref DE.Low);
+                        case 0x3C: return Srl(ref HL.High);
+                        case 0x3D: return Srl(ref HL.Low);
+                        case 0x3E: return SrlHl();
+                        case 0x3F: return Srl(ref A);
+
                         default:
                             throw new Exception($"Invalid opcode 0xCB {opcode} at PC = {PC - 1}");
                     }
@@ -1390,7 +1410,6 @@ namespace GbSharp.Cpu
         /// SLA
         /// </summary>
         /// <param name="register">The register to shift.</param>
-        /// <param name="isA">If the register is the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Sla(ref byte register)
         {
@@ -1414,6 +1433,104 @@ namespace GbSharp.Cpu
             ClearFlag(CpuFlag.HalfCarry);
 
             byte value = SlaByte(MemoryMap.Read(HL.Value));
+
+            SetFlag(CpuFlag.Zero, value == 0);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// Shifts the byte right and stores the zeroth bit into the carry. The seventh bit is set to zero.
+        /// </summary>
+        /// <param name="b">The byte to rotate.</param>
+        /// <returns>The rotated byte.</returns>
+        private byte SrlByte(byte b)
+        {
+            int zerothBit = b & 1;
+            SetFlag(CpuFlag.Carry, zerothBit == 1);
+
+            return (byte)(b >> 1);
+        }
+
+        /// <summary>
+        /// SRL
+        /// </summary>
+        /// <param name="register">The register to shift.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Srl(ref byte register)
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            register = SrlByte(register);
+
+            SetFlag(CpuFlag.Zero, register == 0);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// SRL (HL)
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int SrlHl()
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            byte value = SrlByte(MemoryMap.Read(HL.Value));
+
+            SetFlag(CpuFlag.Zero, value == 0);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// Shifts the byte right and stores the zeroth bit into the carry. The seventh bit is set to its previous value.
+        /// </summary>
+        /// <param name="b">The byte to rotate.</param>
+        /// <returns>The rotated byte.</returns>
+        private byte SraByte(byte b)
+        {
+            int zerothBit = b & 1;
+            SetFlag(CpuFlag.Carry, zerothBit == 1);
+
+            int seventhBit = b & 0x80;
+
+            return (byte)((b >> 1) | seventhBit);
+        }
+
+        /// <summary>
+        /// SRA
+        /// </summary>
+        /// <param name="register">The register to shift.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Sra(ref byte register)
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            register = SraByte(register);
+
+            SetFlag(CpuFlag.Zero, register == 0);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// SRA (HL)
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int SraHl()
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            byte value = SraByte(MemoryMap.Read(HL.Value));
 
             SetFlag(CpuFlag.Zero, value == 0);
 
