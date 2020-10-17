@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -495,7 +495,7 @@ namespace GbSharp.Cpu
                 case 0xBE: return SubPtr(false, false);
                 case 0xBF: return Sub(A, false, false);
 
-                // RET Nf
+                // RET Cf
                 case 0xC0: return Ret(CpuFlag.Zero, false);
                 case 0xC1: return Ret(CpuFlag.Carry, false);
 
@@ -547,6 +547,10 @@ namespace GbSharp.Cpu
             return 2;
         }
 
+        /// <summary>
+        /// RET
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Ret()
         {
             PC = PopStack();
@@ -554,6 +558,12 @@ namespace GbSharp.Cpu
             return 4;
         }
 
+        /// <summary>
+        /// RET Cf
+        /// </summary>
+        /// <param name="flag">The CpuFlag to check.</param>
+        /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Ret(CpuFlag flag, bool setTo)
         {
             if (CheckFlag(flag) == setTo)
