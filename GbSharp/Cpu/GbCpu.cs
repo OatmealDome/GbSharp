@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -66,7 +66,7 @@ namespace GbSharp.Cpu
             // F    1000 0000
             // mask 0001 0000
             // XOR  1001 0000
-            F ^= (byte)(1 << (int)flag);
+            F |= (byte)(1 << (int)flag);
         }
 
         private void SetFlag(CpuFlag flag, bool val)
