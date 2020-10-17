@@ -455,6 +455,16 @@ namespace GbSharp.Cpu
                 case 0xAE: return XorPtr();
                 case 0xAF: return Xor(A);
 
+                // OR A, x
+                case 0xB0: return Or(BC.High);
+                case 0xB1: return Or(BC.Low);
+                case 0xB2: return Or(DE.High);
+                case 0xB3: return Or(DE.Low);
+                case 0xB4: return Or(HL.High);
+                case 0xB5: return Or(HL.Low);
+                case 0xB6: return OrPtr();
+                case 0xB7: return Or(A);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -1079,6 +1089,46 @@ namespace GbSharp.Cpu
             byte value = AdvancePC();
 
             return Xor(value) + 1;
+        }
+
+        /// <summary>
+        /// OR A, source
+        /// </summary>
+        /// <param name="source">The value to OR the accumulator with.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Or(byte source)
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+            ClearFlag(CpuFlag.Carry);
+
+            A |= source;
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// OR A, (HL)
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int OrPtr()
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            return Or(value) + 1;
+        }
+
+        /// <summary>
+        /// OR A, u8
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Or()
+        {
+            byte value = AdvancePC();
+
+            return Or(value) + 1;
         }
 
     }
