@@ -596,6 +596,18 @@ namespace GbSharp.Cpu
 
                 // CALL u16
                 case 0xCD: return Call(CpuFlag.None);
+
+                // ADC A, u8
+                case 0xCE: return Add(true);
+
+                // SBC A, u8
+                case 0xDE: return Sub(true);
+
+                // XOR A, u8
+                case 0xEE: return Xor();
+
+                // CP A, u8
+                case 0xFE: return Sub(false, false);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
