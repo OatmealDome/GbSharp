@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -535,7 +535,7 @@ namespace GbSharp.Cpu
                 case 0xC5: return PushInst(BC);
                 case 0xD5: return PushInst(DE);
                 case 0xE5: return PushInst(HL);
-                case 0xF6: return PushInstAf();
+                case 0xF5: return PushInstAf();
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
