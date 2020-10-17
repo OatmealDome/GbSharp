@@ -38,6 +38,11 @@ namespace GbSharp.Memory
             MemoryRegions.Add(new Tuple<ushort, int>(address, size), region);
         }
 
+        public void RegisterMmio(ushort address, Func<byte> readFunc, Action<byte> writeFunc)
+        {
+            MemoryRegions.Add(new Tuple<ushort, int>(address, 1), new MmioRegion(readFunc, writeFunc));
+        }
+
         private Tuple<ushort, MemoryRegion> GetRegion(ushort address)
         {
             foreach (Tuple<ushort, int> regionSpan in MemoryRegions.Keys)
