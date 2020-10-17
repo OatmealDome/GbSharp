@@ -609,7 +609,7 @@ namespace GbSharp.Cpu
         {
             PushStack(pair.Value);
 
-            return 16;
+            return 4;
         }
 
         /// <summary>
@@ -620,7 +620,7 @@ namespace GbSharp.Cpu
         {
             PushStack((ushort)(A << 8 | F));
 
-            return 16;
+            return 4;
         }
 
         /// <summary>
@@ -632,7 +632,7 @@ namespace GbSharp.Cpu
         {
             pair.Value = PopStack();
 
-            return 16;
+            return 3;
         }
 
         /// <summary>
@@ -646,7 +646,7 @@ namespace GbSharp.Cpu
             A = (byte)(value >> 8);
             F = (byte)(value & 0xFF);
 
-            return 16;
+            return 3;
         }
 
         /// <summary>
