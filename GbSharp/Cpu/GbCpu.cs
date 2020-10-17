@@ -322,10 +322,10 @@ namespace GbSharp.Cpu
                 case 0x3E: return Ld(ref A);
 
                 // RRCA
-                case 0x0F: return Rrca();
+                case 0x0F: return Rrc(ref A, true);
 
                 // RRA
-                case 0x1F: return Rra();
+                case 0x1F: return Rr(ref A, true);
 
                 // CPL
                 case 0x2F: return Cpl();
@@ -624,6 +624,16 @@ namespace GbSharp.Cpu
                         case 0x06: return RlcHl();
                         case 0x07: return Rlc(ref A, false); // Not RLCA
 
+                        // RRC
+                        case 0x08: return Rrc(ref BC.High);
+                        case 0x09: return Rrc(ref BC.Low);
+                        case 0x0A: return Rrc(ref DE.High);
+                        case 0x0B: return Rrc(ref DE.Low);
+                        case 0x0C: return Rrc(ref HL.High);
+                        case 0x0D: return Rrc(ref HL.Low);
+                        case 0x0E: return RrcHl();
+                        case 0x0F: return Rrc(ref A, false); // Not RRCA
+
                         // RL
                         case 0x10: return Rl(ref BC.High);
                         case 0x11: return Rl(ref BC.Low);
@@ -633,6 +643,16 @@ namespace GbSharp.Cpu
                         case 0x15: return Rl(ref HL.Low);
                         case 0x16: return RlHl();
                         case 0x17: return Rl(ref A, false); // Not RLA
+
+                        // RR
+                        case 0x18: return Rr(ref BC.High);
+                        case 0x19: return Rr(ref BC.Low);
+                        case 0x1A: return Rr(ref DE.High);
+                        case 0x1B: return Rr(ref DE.Low);
+                        case 0x1C: return Rr(ref HL.High);
+                        case 0x1D: return Rr(ref HL.Low);
+                        case 0x1E: return RrHl();
+                        case 0x1F: return Rr(ref A, false); // Not RRA
 
                         default:
                             throw new Exception($"Invalid opcode 0xCB {opcode} at PC = {PC - 1}");
@@ -1221,45 +1241,126 @@ namespace GbSharp.Cpu
             return 2;
         }
 
-        /// RRCA
-        /// 
+        /// <summary>
         /// Rotates A right and stores the zeroth bit into the carry and the seventh bit.
         /// </summary>
-        /// <returns></returns>
-        private int Rrca()
+        /// <param name="b">The byte to rotate.</param>
+        /// <returns>The rotated byte.</returns>
+        private byte RrcByte(byte b)
         {
-            ClearFlag(CpuFlag.Zero);
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            int zerothBit = A & 1;
+            int zerothBit = b & 1;
             SetFlag(CpuFlag.Carry, zerothBit == 1);
 
-            A = (byte)((A >> 1) | zerothBit << 7);
-
-            return 1;
+            return (byte)((b >> 1) | zerothBit << 7);
         }
 
         /// <summary>
-        /// RRA
-        /// 
-        /// Rotates A right through the carry.
+        /// RRC
+        /// RRCA
         /// </summary>
-        /// <returns></returns>
-        private int Rra()
+        /// <param name="register">The register to rotate.</param>
+        /// <param name="isA">If the register is the accumulator.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Rrc(ref byte register, bool isA = false)
         {
-            ClearFlag(CpuFlag.Zero);
+            if (isA)
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
+
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
 
+            register = RrcByte(register);
+
+            if (isA)
+            {
+                return 1;
+            }
+
+            SetFlag(CpuFlag.Zero, register == 0);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// RRC HL
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int RrcHl()
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            byte value = RrcByte(MemoryMap.Read(HL.Value));
+
+            SetFlag(CpuFlag.Zero, value == 0);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// Rotates A right through the carry.
+        /// </summary>
+        /// <param name="b">The byte to rotate.</param>
+        /// <returns>The rotated byte</returns>
+        private byte RrByte(byte b)
+        {
             int carry = CheckFlag(CpuFlag.Carry) ? 1 : 0;
 
-            int zerothBit = A & 1;
+            int zerothBit = b & 1;
             SetFlag(CpuFlag.Carry, zerothBit == 1);
 
-            A = (byte)((A >> 1) | carry << 7);
+            return (byte)((b >> 1) | carry << 7);
+        }
 
-            return 1;
+        /// <summary>
+        /// RR
+        /// RRA
+        /// </summary>
+        /// <param name="register">The register to rotate.</param>
+        /// <param name="isA">If the register is the accumulator.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Rr(ref byte register, bool isA = false)
+        {
+            if (isA)
+            {
+                ClearFlag(CpuFlag.Zero);
+            }
+
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            register = RrByte(register);
+
+            if (isA)
+            {
+                return 1;
+            }
+
+            SetFlag(CpuFlag.Zero, register == 0);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// RR HL
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int RrHl()
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            byte value = RrByte(MemoryMap.Read(HL.Value));
+
+            SetFlag(CpuFlag.Zero, value == 0);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 2;
         }
 
         /// <summary>
