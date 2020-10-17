@@ -279,7 +279,7 @@ namespace GbSharp.Cpu
                 case 0x08: return LdSpToAddress();
 
                 // JR s8
-                case 0x18: return Jr();
+                case 0x18: return Jr(CpuFlag.None);
 
                 // JR f, s8
                 case 0x28: return Jr(CpuFlag.Zero, true);
@@ -522,7 +522,7 @@ namespace GbSharp.Cpu
                 case 0xF2: return LdUpperMemory(BC.Low, false);
 
                 // JP u16
-                case 0xC3: return Jp();
+                case 0xC3: return Jp(CpuFlag.None);
 
                 // PUSH pair
                 case 0xC5: return PushInst(BC);
@@ -547,28 +547,16 @@ namespace GbSharp.Cpu
 
         /// <summary>
         /// JR s8
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Jr()
-        {
-            sbyte offset = (sbyte)AdvancePC();
-            PC = (ushort)(PC + offset);
-
-            return 3;
-        }
-
-        /// <summary>
         /// JR Cf, s8
         /// </summary>
         /// <param name="flag">The CpuFlag to check.</param>
         /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Jr(CpuFlag flag, bool setTo)
+        private int Jr(CpuFlag flag, bool setTo = false)
         {
             sbyte offset = (sbyte)AdvancePC();
-            bool flagValue = CheckFlag(flag);
 
-            if (setTo == flagValue)
+            if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
                 PC = (ushort)(PC + offset);
 
@@ -580,24 +568,14 @@ namespace GbSharp.Cpu
 
         /// <summary>
         /// JP u16
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Jp()
-        {
-            PC = (ushort)(AdvancePC() | (AdvancePC() << 8));
-
-            return 4;
-        }
-
-        /// <summary>
         /// JP Cf, u16
         /// </summary>
         /// <param name="flag">The CpuFlag to check.</param>
         /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Jp(CpuFlag flag, bool setTo)
+        private int Jp(CpuFlag flag, bool setTo = false)
         {
-            if (CheckFlag(flag) == setTo)
+            if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
                 PC = (ushort)(AdvancePC() | (AdvancePC() << 8));
 
@@ -609,28 +587,18 @@ namespace GbSharp.Cpu
 
         /// <summary>
         /// RET
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Ret()
-        {
-            PC = PopStack();
-
-            return 4;
-        }
-
-        /// <summary>
         /// RET Cf
         /// </summary>
         /// <param name="flag">The CpuFlag to check.</param>
         /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Ret(CpuFlag flag, bool setTo)
+        private int Ret(CpuFlag flag, bool setTo = false)
         {
-            if (CheckFlag(flag) == setTo)
+            if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
                 PC = PopStack();
 
-                return 5;
+                return flag == CpuFlag.None ? 4 : 5;
             }
 
             return 2;

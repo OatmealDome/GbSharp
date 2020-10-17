@@ -5,6 +5,7 @@
         Zero = 7,
         Negative = 6,
         HalfCarry = 5,
-        Carry = 4
+        Carry = 4,
+        None = -1
     }
 }
