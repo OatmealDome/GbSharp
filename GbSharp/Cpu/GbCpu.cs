@@ -278,6 +278,12 @@ namespace GbSharp.Cpu
                 case 0x2A: return Ld(HL, ref A, PostLdOperation.Increment);
                 case 0x3A: return Ld(HL, ref A, PostLdOperation.Decrement);
 
+                // DEC pair
+                case 0x0B: return DecPair(BC);
+                case 0x1B: return DecPair(DE);
+                case 0x2B: return DecPair(HL);
+                case 0x3B: return DecSp();
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
