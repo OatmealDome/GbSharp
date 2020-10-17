@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -499,6 +499,18 @@ namespace GbSharp.Cpu
                 case 0xC0: return Ret(CpuFlag.Zero, false);
                 case 0xD0: return Ret(CpuFlag.Carry, false);
 
+                // LD (FF00 + u8), A
+                case 0xE0: return LdUpperMemory(true);
+
+                // LD A, (FF00 + u8)
+                case 0xF0: return LdUpperMemory(false);
+
+                // LD (FF00 + C), A
+                case 0xE2: return LdUpperMemory(BC.Low, true);
+
+                // LD A, (FF00 + C)
+                case 0xF2: return LdUpperMemory(BC.Low, false);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -669,6 +681,40 @@ namespace GbSharp.Cpu
             MemoryMap.Write(AdvancePC(), (byte)(SP >> 8));
 
             return 5;
+        }
+
+        /// <summary>
+        /// LD (FF00 + offset), A
+        /// LD A, (FF00 + offset)
+        /// </summary>
+        /// <param name="offset">The offset from 0xFF00.</param>
+        /// <param name="store">If the accumulator should be stored to the address. If unset, the accumulator will be set to the value at the address.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int LdUpperMemory(byte offset, bool store)
+        {
+            ushort address = (ushort)(0xFF00 + offset);
+
+            if (store)
+            {
+                MemoryMap.Write(address, A);
+            }
+            else
+            {
+                A = MemoryMap.Read(address);
+            }
+
+            return 2;
+        }
+
+        /// <summary>
+        /// LD (FF00 + u8), A
+        /// LD A, (FF00 + u8)
+        /// </summary>
+        /// <param name="store">If the accumulator should be stored to the address. If unset, the accumulator will be set to the value at the address.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int LdUpperMemory(bool store)
+        {
+            return LdUpperMemory(AdvancePC(), store) + 1;
         }
 
         /// <summary>
