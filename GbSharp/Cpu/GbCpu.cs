@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -831,7 +831,7 @@ namespace GbSharp.Cpu
         {
             byte value = MemoryMap.Read(HL.Value);
 
-            return Add(value, addCarry);
+            return Add(value, addCarry) + 1;
         }
 
         /// <summary>
