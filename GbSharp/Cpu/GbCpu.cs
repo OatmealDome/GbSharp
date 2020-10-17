@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -82,12 +82,16 @@ namespace GbSharp.Cpu
             }
         }
 
-        private void SetHalfCarry(byte baseVal, byte operand, bool addition)
+        private bool CheckOverflowOnBit(int baseVal, int operand, int bit)
         {
-            if (addition)
-            {
-                // The half carry flag is set if there is a carry from bit 3
-                // to bit 4. For example:
+            // The carry flags are set if there is a carry from one group
+            // of bits to another.
+            //
+            // For example, take the following:
+            // 
+            // LD A, 0x8 ; 0b1000
+            // LD B, 0x8 ; 0b1000
+            // ADD A, B  ; A = A + B
                 //
                 //      1
                 //   0000 1000
@@ -97,21 +101,45 @@ namespace GbSharp.Cpu
                 //
                 // In this addition operation, the half carry flag will be set.
                 // 
-                // An easy way to check this is to see if the sum of the first
-                // nybbles of the operands exceeds 0xF.
-                if ((baseVal & 0xF + operand & 0xF) > 0xF)
-                {
-                    SetFlag(CpuFlag.HalfCarry);
+            // An easy way to check to see if the (half) carry flag should
+            // be set is to see if the sum of the relevant bits creates a
+            // number which can't fit in the same number of bits.
+            //
+            // Taking the example above:
+            //
+            // Using the bit we are checking for a carry on, we calculate
+            // that the mask is 0000 1111 ((1 << (3 + 1)) - 1).
+            //
+            //     0000 1000
+            // AND 0000 1111
+            // -------------
+            //     0000 1000
+            //
+            //      1
+            //        1000
+            // +      1000
+            // -----------
+            //   0001 0000
+            //
+            // Since the sum is greater than the mask, there will be a carry
+            // from bit 3 to 4.
+            //
+
+            int mask = (1 << (bit + 1)) - 1;
+
+            return (baseVal & mask) + (operand & mask) > mask;
                 }
-                else
+
+        private bool CheckBorrowFromBit(int baseVal, int operand, int bit)
                 {
-                    ClearFlag(CpuFlag.HalfCarry);
-                }
-            }
-            else
-            {
-                // The half carry flag is set if there is a borrow from bit 4
-                // to bit 3. For example:
+            // The carry flags are set if there is a borrow from one group
+            // of bits to another.
+            //
+            // For example, take the following:
+            //
+            // LD A, 0x10 ; 0b00010000
+            // LD B, 0x8  ; 0b0001000
+            // SUB A, B   ; A = A - B
                 //
                 //      - 1
                 //   0001 0000
@@ -119,19 +147,42 @@ namespace GbSharp.Cpu
                 // -----------
                 //   0000 1000
                 // 
-                // An easy way to check this is to see subtract the operands
-                // from each other, and then check for an underflow.
-                sbyte one = (sbyte)(baseVal & 0xF);
-                sbyte two = (sbyte)(operand & 0xF);
-                if (one - two < 0)
-                {
-                    SetFlag(CpuFlag.HalfCarry);
-                }
-                else
-                {
-                    ClearFlag(CpuFlag.HalfCarry);
-                }
-            }
+            // In this subtraction operation, the half carry flag will be
+            // set because there is a borrow from bit 4 to 3.
+            // 
+            // An easy way to check this is take the difference of the 
+            // relevant bits and check to see if it is negative.
+            //
+            // Taking the example above:
+            //
+            // Using the bit we are checking for a borrow from, we calculate
+            // that the mask is 0000 1111 ((1 << 4) - 1).
+            //
+            //     0000 1000
+            // AND 0000 1111
+            // -------------
+            //     0000 1000
+            //
+            //     0001 0000
+            // AND 0000 1111
+            // -------------
+            //     0000 0000
+            //
+            // Then, we perform a subtraction with these values as signed:
+            //
+            //      - 
+            //        0000
+            // -      1000
+            // -----------
+            //   1111 1000
+            //
+            // Since the difference is negative, there will be a borrow from
+            // bit 4.
+            //
+
+            int mask = (1 << bit) - 1;
+
+            return (baseVal & mask) - (operand & mask) < 0;
         }
 
         /// <summary>
@@ -453,7 +504,7 @@ namespace GbSharp.Cpu
             byte baseVal = MemoryMap.Read(pair.Value);
             byte sum = (byte)(baseVal + 1);
 
-            SetHalfCarry(baseVal, 1, true);
+            CheckOverflowOnBit(baseVal, 1, 3);
 
             if (sum == 0)
             {
@@ -490,7 +541,8 @@ namespace GbSharp.Cpu
             ClearFlag(CpuFlag.Negative);
 
             byte baseVal = register++;
-            SetHalfCarry(baseVal, 1, true);
+
+            CheckOverflowOnBit(baseVal, 1, 3);
 
             if (register == 0)
             {
@@ -528,7 +580,7 @@ namespace GbSharp.Cpu
             byte baseVal = MemoryMap.Read(pair.Value);
             byte difference = (byte)(baseVal - 1);
 
-            SetHalfCarry(baseVal, 1, false);
+            CheckBorrowFromBit(baseVal, 1, 4);
 
             if (difference == 0)
             {
@@ -565,7 +617,8 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Negative);
 
             byte baseVal = register--;
-            SetHalfCarry(baseVal, 1, false);
+
+            CheckBorrowFromBit(baseVal, 1, 4);
 
             if (register == 0)
             {
