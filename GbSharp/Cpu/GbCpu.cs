@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -182,6 +182,26 @@ namespace GbSharp.Cpu
             int mask = (1 << bit) - 1;
 
             return (baseVal & mask) - (operand & mask) < 0;
+        }
+
+        private void PushStack(ushort value)
+        {
+            SP--;
+            MemoryMap.Write(SP, (byte)(value >> 8));
+
+            SP--;
+            MemoryMap.Write(SP, (byte)(value & 0xFF));
+        }
+
+        private ushort PopStack()
+        {
+            ushort value = MemoryMap.Read(SP);
+            SP++;
+
+            value |= (ushort)(MemoryMap.Read(SP) << 8);
+            SP++;
+
+            return value;
         }
 
         /// <summary>
