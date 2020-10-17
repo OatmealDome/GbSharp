@@ -12,12 +12,14 @@ namespace GbSharp.Cpu
         private readonly RegisterPair BC;
         private readonly RegisterPair DE;
         private readonly RegisterPair HL;
-        private readonly IeRegisterRegion IeRegion;
+
+        private byte EnabledInterrupts;
 
         private readonly GbMemory MemoryMap;
 
         public GbCpu(GbMemory memory)
         {
+            // Create RegisterPairs and set initial values
             PC = 0;
             SP = 0;
             A = 0;
@@ -26,8 +28,8 @@ namespace GbSharp.Cpu
             DE = new RegisterPair();
             HL = new RegisterPair();
 
-            IeRegion = new IeRegisterRegion();
-            memory.RegisterRegion(0xFFFF, 0x1, IeRegion);
+            // Register MMIO
+            MemoryMap.RegisterMmio(0xFFFF, () => EnabledInterrupts, x => EnabledInterrupts = x);
 
             MemoryMap = memory;
         }
