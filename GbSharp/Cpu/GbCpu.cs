@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -558,10 +558,14 @@ namespace GbSharp.Cpu
                 case 0xDF: return Rst(0x18);
                 case 0xEF: return Rst(0x28);
                 case 0xFF: return Rst(0x38);
-                
+
                 // RET f
                 case 0xC8: return Ret(CpuFlag.Zero, true);
                 case 0xD8: return Ret(CpuFlag.Carry, true);
+
+                // ADD SP, s8
+                case 0xE8: return AddSp(false);
+                case 0xF8: return AddSp(true);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
@@ -1141,6 +1145,37 @@ namespace GbSharp.Cpu
             byte value = AdvancePC();
 
             return Add(value, addCarry) + 1;
+        }
+
+        /// <summary>
+        /// ADD SP, s8
+        /// LD HL, SP + s8
+        /// </summary>
+        /// <param name="storeHl">If the result should be stored into HL instead of SP.</param>
+        /// <returns></returns>
+        private int AddSp(bool storeHl)
+        {
+            ClearFlag(CpuFlag.Zero);
+            ClearFlag(CpuFlag.Negative);
+
+            sbyte offset = (sbyte)AdvancePC();
+
+            CheckOverflowOnBit(SP, offset, 3);
+            CheckOverflowOnBit(SP, offset, 7);
+
+            ushort newAddress = (ushort)(SP + offset);
+            if (storeHl)
+            {
+                HL.Value = newAddress;
+
+                return 3;
+            }
+            else
+            {
+                SP = newAddress;
+
+                return 4;
+            }
         }
 
         /// <summary>
