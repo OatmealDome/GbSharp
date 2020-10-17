@@ -639,7 +639,7 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int JpHl()
         {
-            PC = HL;
+            PC = HL.Value;
 
             return 1;
         }
