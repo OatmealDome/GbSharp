@@ -511,11 +511,18 @@ namespace GbSharp.Cpu
                 case 0xE1: return PopInst(HL);
                 case 0xF1: return PopInstAf();
 
+                // JP Cf, u16
+                case 0xC2: return Jp(CpuFlag.Zero, false);
+                case 0xD2: return Jp(CpuFlag.Carry, false);
+
                 // LD (FF00 + C), A
                 case 0xE2: return LdUpperMemory(BC.Low, true);
 
                 // LD A, (FF00 + C)
                 case 0xF2: return LdUpperMemory(BC.Low, false);
+
+                // JP u16
+                case 0xC3: return Jp();
 
                 // PUSH pair
                 case 0xC5: return PushInst(BC);
@@ -569,6 +576,35 @@ namespace GbSharp.Cpu
             }
 
             return 2;
+        }
+
+        /// <summary>
+        /// JP u16
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Jp()
+        {
+            PC = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
+            return 4;
+        }
+
+        /// <summary>
+        /// JP Cf, u16
+        /// </summary>
+        /// <param name="flag">The CpuFlag to check.</param>
+        /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Jp(CpuFlag flag, bool setTo)
+        {
+            if (CheckFlag(flag) == setTo)
+            {
+                PC = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
+                return 4;
+            }
+
+            return 3;
         }
 
         /// <summary>
