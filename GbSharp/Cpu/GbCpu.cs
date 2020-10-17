@@ -575,6 +575,9 @@ namespace GbSharp.Cpu
 
                 // JP HL
                 case 0xE9: return JpHl();
+
+                // LD SP, HL
+                case 0xF9: return LdSpHl();
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
@@ -876,6 +879,17 @@ namespace GbSharp.Cpu
         private int LdUpperMemory(bool store)
         {
             return LdUpperMemory(AdvancePC(), store) + 1;
+        }
+
+        /// <summary>
+        /// LD SP, HL
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int LdSpHl()
+        {
+            SP = HL.Value;
+
+            return 2;
         }
 
         /// <summary>
