@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -44,31 +44,17 @@ namespace GbSharp.Cpu
 
         private bool CheckFlag(CpuFlag flag)
         {
-            // for example, checking Carry:
-            // F      1001 0000
-            // mask   0001 0000
-            // AND    0001 0000
-            int mask = (1 << (int)flag);
-            return (F & mask) == mask;
+            return MathUtil.IsBitSet(F, (int)flag);
         }
 
         private void ClearFlag(CpuFlag flag)
         {
-            // for example, clearing Carry:
-            // F      1001 0000
-            // mask   0001 0000
-            // invert 1110 0000
-            // AND    1000 0000
-            F &= (byte)~(1 << (int)flag);
+            MathUtil.ClearBit(ref F, (int)flag);
         }
 
         private void SetFlag(CpuFlag flag)
         {
-            // for example, setting Carry:
-            // F    1000 0000
-            // mask 0001 0000
-            // XOR  1001 0000
-            F |= (byte)(1 << (int)flag);
+            MathUtil.SetBit(ref F, (int)flag);
         }
 
         private void SetFlag(CpuFlag flag, bool val)
@@ -2022,7 +2008,7 @@ namespace GbSharp.Cpu
         /// <param name="b">The target byte.</param>
         private void Bit(int bit, byte b)
         {
-            SetFlag(CpuFlag.Zero, (b & (1 << bit)) == 0);
+            SetFlag(CpuFlag.Zero, !MathUtil.IsBitSet(b, bit));
         }
 
         /// <summary>
@@ -2057,16 +2043,6 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// Sets the specified bit to zero.
-        /// </summary>
-        /// <param name="bit">The bit to set.</param>
-        /// <param name="b">The target byte.</param>
-        private void ResByte(int bit, ref byte b)
-        {
-            b &= (byte)~(1 << bit);
-        }
-
-        /// <summary>
         /// RES bit, x
         /// </summary>
         /// <param name="bit">The bit to set.</param>
@@ -2074,7 +2050,7 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Res(int bit, ref byte register)
         {
-            ResByte(bit, ref register);
+            MathUtil.ClearBit(ref register, bit);
 
             return 2;
         }
@@ -2088,21 +2064,11 @@ namespace GbSharp.Cpu
         {
             byte value = MemoryMap.Read(HL.Value);
 
-            ResByte(bit, ref value);
+            MathUtil.ClearBit(ref value, bit);
 
             MemoryMap.Write(HL.Value, value);
 
             return 4;
-        }
-
-        /// <summary>
-        /// Sets the specified bit to one.
-        /// </summary>
-        /// <param name="bit">The bit to set.</param>
-        /// <param name="b">The target byte.</param>
-        private void SetByte(int bit, ref byte b)
-        {
-            b |= (byte)(1 << bit);
         }
 
         /// <summary>
@@ -2113,7 +2079,7 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Set(int bit, ref byte register)
         {
-            SetByte(bit, ref register);
+            MathUtil.SetBit(ref register, bit);
 
             return 2;
         }
@@ -2127,7 +2093,7 @@ namespace GbSharp.Cpu
         {
             byte value = MemoryMap.Read(HL.Value);
 
-            SetByte(bit, ref value);
+            MathUtil.SetBit(ref value, bit);
 
             MemoryMap.Write(HL.Value, value);
 
