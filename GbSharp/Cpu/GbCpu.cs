@@ -621,7 +621,7 @@ namespace GbSharp.Cpu
                         case 0x03: return Rotate(RotationType.LeftCircular, ref DE.Low);
                         case 0x04: return Rotate(RotationType.LeftCircular, ref HL.High);
                         case 0x05: return Rotate(RotationType.LeftCircular, ref HL.Low);
-                        case 0x06: return RotateHl(RotationType.LeftCircular);
+                        case 0x06: return RotatePtr(RotationType.LeftCircular);
                         case 0x07: return Rotate(RotationType.LeftCircular, ref A, false); // Not RLCA
 
                         // RRC
@@ -631,7 +631,7 @@ namespace GbSharp.Cpu
                         case 0x0B: return Rotate(RotationType.RightCircular, ref DE.Low);
                         case 0x0C: return Rotate(RotationType.RightCircular, ref HL.High);
                         case 0x0D: return Rotate(RotationType.RightCircular, ref HL.Low);
-                        case 0x0E: return RotateHl(RotationType.RightCircular);
+                        case 0x0E: return RotatePtr(RotationType.RightCircular);
                         case 0x0F: return Rotate(RotationType.RightCircular, ref A, false); // Not RRCA
 
                         // RL
@@ -641,7 +641,7 @@ namespace GbSharp.Cpu
                         case 0x13: return Rotate(RotationType.Left, ref DE.Low);
                         case 0x14: return Rotate(RotationType.Left, ref HL.High);
                         case 0x15: return Rotate(RotationType.Left, ref HL.Low);
-                        case 0x16: return RotateHl(RotationType.Left);
+                        case 0x16: return RotatePtr(RotationType.Left);
                         case 0x17: return Rotate(RotationType.Left, ref A, false); // Not RLA
 
                         // RR
@@ -651,7 +651,7 @@ namespace GbSharp.Cpu
                         case 0x1B: return Rotate(RotationType.Right, ref DE.Low);
                         case 0x1C: return Rotate(RotationType.Right, ref HL.High);
                         case 0x1D: return Rotate(RotationType.Right, ref HL.Low);
-                        case 0x1E: return RotateHl(RotationType.Right);
+                        case 0x1E: return RotatePtr(RotationType.Right);
                         case 0x1F: return Rotate(RotationType.Right, ref A, false); // Not RRA
 
                         // SLA
@@ -1254,10 +1254,13 @@ namespace GbSharp.Cpu
 
         /// <summary>
         /// RLC (HL)
+        /// RRC (HL)
+        /// RL (HL)
+        /// RR (HL)
         /// </summary>
-        /// <param name="pair">The RegisterPair containing the memory pointer of the byte to rotate</param>
+        /// <param name="type">The type of rotation to perform.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int RotateHl(RotationType type)
+        private int RotatePtr(RotationType type)
         {
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
