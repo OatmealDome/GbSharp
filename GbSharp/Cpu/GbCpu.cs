@@ -302,6 +302,12 @@ namespace GbSharp.Cpu
                 case 0x2E: return Ld(ref HL.Low);
                 case 0x3E: return Ld(ref A);
 
+                // RRCA
+                case 0x0F: return Rrca();
+
+                // RRA
+                case 0x1F: return Rra();
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
@@ -689,6 +695,47 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry, seventhBit == 1);
 
             A = (byte)((A << 1) | carry);
+
+            return 1;
+        }
+
+        /// RRCA
+        /// 
+        /// Rotates A right and stores the zeroth bit into the carry and the seventh bit.
+        /// </summary>
+        /// <returns></returns>
+        private int Rrca()
+        {
+            ClearFlag(CpuFlag.Zero);
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            int zerothBit = A & 1;
+            SetFlag(CpuFlag.Carry, zerothBit == 1);
+
+            A = (byte)((A >> 1) | zerothBit << 7);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// RRA
+        /// 
+        /// Rotates A right through the carry.
+        /// </summary>
+        /// <returns></returns>
+        private int Rra()
+        {
+            ClearFlag(CpuFlag.Zero);
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
+            int carry = CheckFlag(CpuFlag.Carry) ? 1 : 0;
+
+            int zerothBit = A & 1;
+            SetFlag(CpuFlag.Carry, zerothBit == 1);
+
+            A = (byte)((A >> 1) | carry << 7);
 
             return 1;
         }
