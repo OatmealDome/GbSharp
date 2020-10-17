@@ -311,6 +311,9 @@ namespace GbSharp.Cpu
                 // CPL
                 case 0x2F: return Cpl();
 
+                // CCF
+                case 0x3F: return Ccf();
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
@@ -785,5 +788,25 @@ namespace GbSharp.Cpu
 
             return 1;
         }
+
+        /// <summary>
+        /// CCF
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Ccf()
+        {
+            bool carry = CheckFlag(CpuFlag.Carry);
+            if (carry)
+            {
+                ClearFlag(CpuFlag.Carry);
+            }
+            else
+            {
+                SetFlag(CpuFlag.Carry);
+            }
+
+            return 1;
+        }
+
     }
 }
