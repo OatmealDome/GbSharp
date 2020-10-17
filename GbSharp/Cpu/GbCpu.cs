@@ -794,15 +794,7 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Ccf()
         {
-            bool carry = CheckFlag(CpuFlag.Carry);
-            if (carry)
-            {
-                ClearFlag(CpuFlag.Carry);
-            }
-            else
-            {
-                SetFlag(CpuFlag.Carry);
-            }
+            SetFlag(CpuFlag.Carry, !CheckFlag(CpuFlag.Carry));
 
             return 1;
         }
