@@ -465,6 +465,16 @@ namespace GbSharp.Cpu
                 case 0xB6: return OrPtr();
                 case 0xB7: return Or(A);
 
+                // CP A, x
+                case 0xB8: return Sub(BC.High, false, false);
+                case 0xB9: return Sub(BC.Low, false, false);
+                case 0xBA: return Sub(DE.High, false, false);
+                case 0xBB: return Sub(DE.Low, false, false);
+                case 0xBC: return Sub(HL.High, false, false);
+                case 0xBD: return Sub(HL.Low, false, false);
+                case 0xBE: return SubPtr(false, false);
+                case 0xBF: return Sub(A, false, false);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -900,16 +910,20 @@ namespace GbSharp.Cpu
         /// <summary>
         /// SUB A, source
         /// SBC A, source
+        /// CP A, source
         /// </summary>
         /// <param name="source">The subtrahend.</param>
         /// <param name="subtractCarry">Whether the carry should be subtracted.</param>
+        /// <param name="storeResult">Whether the result should be stored in the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Sub(byte source, bool subtractCarry = false)
+        private int Sub(byte source, bool subtractCarry = false, bool storeResult = true)
         {
             SetFlag(CpuFlag.Negative);
 
             bool halfCarry = false;
             bool carry = false;
+
+            byte val = A;
 
             if (subtractCarry)
             {
@@ -918,7 +932,7 @@ namespace GbSharp.Cpu
                 halfCarry = CheckBorrowFromBit(A, 1, 4);
                 carry = carryVal > A;
 
-                A -= carryVal;
+                val -= carryVal;
             }
 
             if (!halfCarry)
@@ -931,12 +945,17 @@ namespace GbSharp.Cpu
                 carry = source > A;
             }
 
-            A -= source;
+            val -= source;
 
             SetFlag(CpuFlag.HalfCarry, halfCarry);
             SetFlag(CpuFlag.Carry, carry);
 
-            SetFlag(CpuFlag.Zero, A == 0);
+            SetFlag(CpuFlag.Zero, val == 0);
+
+            if (storeResult)
+            {
+                A = val;
+            }
 
             return 1;
         }
@@ -944,24 +963,28 @@ namespace GbSharp.Cpu
         /// <summary>
         /// SUB A, (HL)
         /// SBC A, (HL)
+        /// CP A, (HL)
         /// </summary>
         /// <param name="addCarry">Whether the carry should be subtracted.</param>
+        /// <param name="storeResult">Whether the result should be stored into to the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
 
-        private int SubPtr(bool addCarry = false)
+        private int SubPtr(bool addCarry = false, bool storeResult = true)
         {
             byte value = MemoryMap.Read(HL.Value);
 
-            return Sub(value, addCarry) + 1;
+            return Sub(value, addCarry, storeResult) + 1;
         }
 
         /// <summary>
         /// SUB A, u8
         /// SBC A, u8
+        /// CP A, u8
         /// </summary>
         /// <param name="addCarry">Whether the carry should be subtracted.</param>
+        /// <param name="storeResult">Whether the result should be stored into to the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Sub(bool addCarry = false)
+        private int Sub(bool addCarry = false, bool storeResult = true)
         {
             byte value = AdvancePC();
 
