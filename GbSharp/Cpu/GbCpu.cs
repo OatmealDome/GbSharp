@@ -566,6 +566,12 @@ namespace GbSharp.Cpu
                 // ADD SP, s8
                 case 0xE8: return AddSp(false);
                 case 0xF8: return AddSp(true);
+
+                // RET
+                case 0xC9: return Ret(CpuFlag.None);
+
+                // RETI
+                // case 0xD9: return Reti(CpuFlag.None);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
