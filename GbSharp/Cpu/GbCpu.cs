@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -558,6 +558,10 @@ namespace GbSharp.Cpu
                 case 0xDF: return Rst(0x18);
                 case 0xEF: return Rst(0x28);
                 case 0xFF: return Rst(0x38);
+                
+                // RET f
+                case 0xC8: return Ret(CpuFlag.Zero, true);
+                case 0xD8: return Ret(CpuFlag.Carry, true);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
