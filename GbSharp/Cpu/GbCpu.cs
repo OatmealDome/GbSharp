@@ -1212,6 +1212,7 @@ namespace GbSharp.Cpu
         /// RL
         /// RR
         /// </summary>
+        /// <param name="type">The type of rotation to perform.</param>
         /// <param name="register">The register to rotate.</param>
         /// <param name="isA">If the register is the accumulator.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
