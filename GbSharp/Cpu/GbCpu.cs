@@ -290,6 +290,12 @@ namespace GbSharp.Cpu
                 case 0x2C: return Inc(ref HL.Low);
                 case 0x3C: return Inc(ref A);
 
+                // DEC x
+                case 0x0D: return Dec(ref BC.Low);
+                case 0x1D: return Dec(ref DE.Low);
+                case 0x2D: return Dec(ref HL.Low);
+                case 0x3D: return Dec(ref A);
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
