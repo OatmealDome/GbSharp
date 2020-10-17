@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -414,6 +414,26 @@ namespace GbSharp.Cpu
                 case 0x8D: return Add(HL.Low, true);
                 case 0x8E: return AddPtr(true);
                 case 0x8F: return Add(A, true);
+
+                // SUB A, x
+                case 0x90: return Sub(BC.High, false);
+                case 0x91: return Sub(BC.Low, false);
+                case 0x92: return Sub(DE.High, false);
+                case 0x93: return Sub(DE.Low, false);
+                case 0x94: return Sub(HL.High, false);
+                case 0x95: return Sub(HL.Low, false);
+                case 0x96: return SubPtr(false);
+                case 0x97: return Sub(A, false);
+
+                // SBC A, x
+                case 0x98: return Sub(BC.High, true);
+                case 0x99: return Sub(BC.Low, true);
+                case 0x9A: return Sub(DE.High, true);
+                case 0x9B: return Sub(DE.Low, true);
+                case 0x9C: return Sub(HL.High, true);
+                case 0x9D: return Sub(HL.Low, true);
+                case 0x9E: return SubPtr(true);
+                case 0x9F: return Sub(A, true);
 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
@@ -845,6 +865,77 @@ namespace GbSharp.Cpu
             byte value = AdvancePC();
 
             return Add(value, addCarry) + 1;
+        }
+
+        /// <summary>
+        /// SUB A, source
+        /// SBC A, source
+        /// </summary>
+        /// <param name="source">The subtrahend.</param>
+        /// <param name="subtractCarry">Whether the carry should be subtracted.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Sub(byte source, bool subtractCarry = false)
+        {
+            SetFlag(CpuFlag.Negative);
+
+            bool halfCarry = false;
+            bool carry = false;
+
+            if (subtractCarry)
+            {
+                byte carryVal = (byte)(CheckFlag(CpuFlag.Carry) ? 1 : 0);
+
+                halfCarry = CheckBorrowFromBit(A, 1, 4);
+                carry = carryVal > A;
+
+                A -= carryVal;
+            }
+
+            if (!halfCarry)
+            {
+                halfCarry = CheckBorrowFromBit(A, source, 4);
+            }
+
+            if (!carry)
+            {
+                carry = source > A;
+            }
+
+            A -= source;
+
+            SetFlag(CpuFlag.HalfCarry, halfCarry);
+            SetFlag(CpuFlag.Carry, carry);
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// SUB A, (HL)
+        /// SBC A, (HL)
+        /// </summary>
+        /// <param name="addCarry">Whether the carry should be subtracted.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+
+        private int SubPtr(bool addCarry = false)
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            return Sub(value, addCarry) + 1;
+        }
+
+        /// <summary>
+        /// SUB A, u8
+        /// SBC A, u8
+        /// </summary>
+        /// <param name="addCarry">Whether the carry should be subtracted.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Sub(bool addCarry = false)
+        {
+            byte value = AdvancePC();
+
+            return Sub(value, addCarry) + 1;
         }
 
         /// <summary>
