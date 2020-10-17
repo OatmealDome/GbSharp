@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -575,9 +575,11 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Jp(CpuFlag flag, bool setTo = false)
         {
+            ushort address = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
             if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
-                PC = (ushort)(AdvancePC() | (AdvancePC() << 8));
+                PC = address;
 
                 return 4;
             }
