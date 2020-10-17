@@ -504,7 +504,7 @@ namespace GbSharp.Cpu
             byte baseVal = MemoryMap.Read(pair.Value);
             byte sum = (byte)(baseVal + 1);
 
-            CheckOverflowOnBit(baseVal, 1, 3);
+            SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(baseVal, 1, 3));
 
             if (sum == 0)
             {
@@ -542,7 +542,7 @@ namespace GbSharp.Cpu
 
             byte baseVal = register++;
 
-            CheckOverflowOnBit(baseVal, 1, 3);
+            SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(baseVal, 1, 3));
 
             if (register == 0)
             {
@@ -580,7 +580,7 @@ namespace GbSharp.Cpu
             byte baseVal = MemoryMap.Read(pair.Value);
             byte difference = (byte)(baseVal - 1);
 
-            CheckBorrowFromBit(baseVal, 1, 4);
+            SetFlag(CpuFlag.HalfCarry, CheckBorrowFromBit(baseVal, 1, 4));
 
             if (difference == 0)
             {
@@ -618,7 +618,7 @@ namespace GbSharp.Cpu
 
             byte baseVal = register--;
 
-            CheckBorrowFromBit(baseVal, 1, 4);
+            SetFlag(CpuFlag.HalfCarry, CheckBorrowFromBit(baseVal, 1, 4));
 
             if (register == 0)
             {
