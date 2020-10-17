@@ -497,7 +497,7 @@ namespace GbSharp.Cpu
 
                 // RET Cf
                 case 0xC0: return Ret(CpuFlag.Zero, false);
-                case 0xC1: return Ret(CpuFlag.Carry, false);
+                case 0xD0: return Ret(CpuFlag.Carry, false);
 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
