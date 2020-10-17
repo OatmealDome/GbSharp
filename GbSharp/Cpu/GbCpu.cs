@@ -1338,6 +1338,7 @@ namespace GbSharp.Cpu
         /// SRA
         /// SRL
         /// </summary>
+        /// <param name="type">The type of shift to perform.</param>
         /// <param name="register">The register to shift.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Shift(ShiftType type, ref byte register)
@@ -1368,6 +1369,7 @@ namespace GbSharp.Cpu
         /// SRA (HL)
         /// SRL (HL)
         /// </summary>
+        /// <param name="type">The type of shift to perform.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int ShiftPtr(ShiftType type)
         {
