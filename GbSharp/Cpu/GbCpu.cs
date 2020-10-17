@@ -308,6 +308,9 @@ namespace GbSharp.Cpu
                 // RRA
                 case 0x1F: return Rra();
 
+                // CPL
+                case 0x2F: return Cpl();
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
@@ -772,5 +775,15 @@ namespace GbSharp.Cpu
             return 2;
         }
 
+        /// <summary>
+        /// CPL
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Cpl()
+        {
+            A = (byte)~A;
+
+            return 1;
+        }
     }
 }
