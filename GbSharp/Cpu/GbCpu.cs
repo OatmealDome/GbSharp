@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -495,6 +495,10 @@ namespace GbSharp.Cpu
                 case 0xBE: return SubPtr(false, false);
                 case 0xBF: return Sub(A, false, false);
 
+                // RET Nf
+                case 0xC0: return Ret(CpuFlag.Zero, false);
+                case 0xC1: return Ret(CpuFlag.Carry, false);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -538,6 +542,25 @@ namespace GbSharp.Cpu
                 PC = (ushort)(PC + offset);
 
                 return 3;
+            }
+
+            return 2;
+        }
+
+        private int Ret()
+        {
+            PC = PopStack();
+
+            return 4;
+        }
+
+        private int Ret(CpuFlag flag, bool setTo)
+        {
+            if (CheckFlag(flag) == setTo)
+            {
+                PC = PopStack();
+
+                return 5;
             }
 
             return 2;
