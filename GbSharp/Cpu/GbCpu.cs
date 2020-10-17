@@ -272,6 +272,12 @@ namespace GbSharp.Cpu
                 case 0x29: return Add(HL.Value);
                 case 0x39: return Add(SP);
 
+                // LD A, (pair)
+                case 0x0A: return Ld(BC, ref A);
+                case 0x1A: return Ld(DE, ref A);
+                case 0x2A: return Ld(HL, ref A, PostLdOperation.Increment);
+                case 0x3A: return Ld(HL, ref A, PostLdOperation.Decrement);
+
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
                 case 0x41: return Ld(BC.Low, ref BC.High);
@@ -419,10 +425,21 @@ namespace GbSharp.Cpu
         /// </summary>
         /// <param name="memoryPtr">The RegisterPair containing the source memory pointer.</param>
         /// <param name="dest">The destination register.</param>
+        /// <param name="postOperation">The operation to perform on the RegisterPair after writing the value.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Ld(RegisterPair memoryPtr, ref byte dest)
+        private int Ld(RegisterPair memoryPtr, ref byte dest, PostLdOperation postOperation = PostLdOperation.None)
         {
             dest = MemoryMap.Read(memoryPtr.Value);
+
+            if (postOperation == PostLdOperation.Increment)
+            {
+                memoryPtr.Value++;
+            }
+            else if (postOperation == PostLdOperation.Decrement)
+            {
+                memoryPtr.Value--;
+            }
+
             return 2;
         }
 
