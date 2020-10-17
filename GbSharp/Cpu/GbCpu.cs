@@ -572,6 +572,9 @@ namespace GbSharp.Cpu
 
                 // RETI
                 // case 0xD9: return Reti(CpuFlag.None);
+
+                // JP HL
+                case 0xE9: return JpHl();
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
@@ -628,6 +631,17 @@ namespace GbSharp.Cpu
             }
 
             return 3;
+        }
+
+        /// <summary>
+        /// JP HL
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int JpHl()
+        {
+            PC = HL;
+
+            return 1;
         }
 
         /// <summary>
