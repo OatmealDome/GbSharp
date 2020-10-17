@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -582,11 +582,21 @@ namespace GbSharp.Cpu
                 // JP f, u16
                 case 0xCA: return Jp(CpuFlag.Zero, true);
                 case 0xDA: return Jp(CpuFlag.Carry, true);
-                
+
                 // LD (u16), A
                 case 0xEA: return LdA(false);
                 case 0xFA: return LdA(true);
 
+                // EI
+                // case 0xFB: ...;
+
+                // CALL f, u16
+                case 0xCC: return Call(CpuFlag.Zero, true);
+                case 0xDC: return Call(CpuFlag.Carry, true);
+
+                // CALL u16
+                case 0xCD: return Call(CpuFlag.None);
+                
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
