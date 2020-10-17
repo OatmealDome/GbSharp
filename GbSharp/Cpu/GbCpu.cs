@@ -1405,7 +1405,7 @@ namespace GbSharp.Cpu
 
             MemoryMap.Write(HL.Value, value);
 
-            return 2;
+            return 4;
         }
 
         /// <summary>
