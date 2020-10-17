@@ -578,6 +578,10 @@ namespace GbSharp.Cpu
 
                 // LD SP, HL
                 case 0xF9: return LdSpHl();
+
+                // JP f, u16
+                case 0xCA: return Jp(CpuFlag.Zero, true);
+                case 0xDA: return Jp(CpuFlag.Carry, true);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
