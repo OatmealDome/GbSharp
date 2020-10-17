@@ -395,6 +395,26 @@ namespace GbSharp.Cpu
                 case 0x7E: return Ld(HL, ref A);
                 case 0x7F: return Ld(A, ref A);
 
+                // ADD A, x
+                case 0x80: return Add(BC.High, false);
+                case 0x81: return Add(BC.Low, false);
+                case 0x82: return Add(DE.High, false);
+                case 0x83: return Add(DE.Low, false);
+                case 0x84: return Add(HL.High, false);
+                case 0x85: return Add(HL.Low, false);
+                case 0x86: return AddPtr(false);
+                case 0x87: return Add(A, false);
+
+                // ADC A, x
+                case 0x88: return Add(BC.High, true);
+                case 0x89: return Add(BC.Low, true);
+                case 0x8A: return Add(DE.High, true);
+                case 0x8B: return Add(DE.Low, true);
+                case 0x8C: return Add(HL.High, true);
+                case 0x8D: return Add(HL.Low, true);
+                case 0x8E: return AddPtr(true);
+                case 0x8F: return Add(A, true);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -754,6 +774,77 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry);
 
             return 1;
+        }
+
+        /// <summary>
+        /// ADD A, source
+        /// ADC A, source
+        /// </summary>
+        /// <param name="source">The summand.</param>
+        /// <param name="addCarry">Whether the carry should be added.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Add(byte source, bool addCarry = false)
+        {
+            ClearFlag(CpuFlag.Negative);
+
+            bool halfCarry = false;
+            bool carry = false;
+
+            if (addCarry)
+            {
+                byte carryVal = (byte)(CheckFlag(CpuFlag.Carry) ? 1 : 0);
+
+                halfCarry = CheckOverflowOnBit(A, 1, 3);
+                carry = CheckOverflowOnBit(A, 1, 7);
+
+                A += carryVal;
+            }
+
+            if (!halfCarry)
+            {
+                halfCarry = CheckOverflowOnBit(A, source, 3);
+            }
+
+            if (!carry)
+            {
+                carry = CheckOverflowOnBit(A, source, 7);
+            }
+
+            A += source;
+
+            SetFlag(CpuFlag.HalfCarry, halfCarry);
+            SetFlag(CpuFlag.Carry, carry);
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// ADD A, (HL)
+        /// ADC A, (HL)
+        /// </summary>
+        /// <param name="addCarry">Whether the carry should be added.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+
+        private int AddPtr(bool addCarry = false)
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            return Add(value, addCarry);
+        }
+
+        /// <summary>
+        /// ADD A, u8
+        /// ADC A, u8
+        /// </summary>
+        /// <param name="addCarry">Whether the carry should be added.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Add(bool addCarry = false)
+        {
+            byte value = AdvancePC();
+
+            return Add(value, addCarry) + 1;
         }
 
         /// <summary>
