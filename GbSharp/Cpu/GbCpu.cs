@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -71,14 +71,13 @@ namespace GbSharp.Cpu
 
         private void SetFlag(CpuFlag flag, bool val)
         {
-            bool currentFlag = CheckFlag(flag);
-            if (currentFlag && !val)
-            {
-                ClearFlag(flag);
-            }
-            else if (!currentFlag && val)
+            if (val)
             {
                 SetFlag(flag);
+            }
+            else
+            {
+                ClearFlag(flag);
             }
         }
 
