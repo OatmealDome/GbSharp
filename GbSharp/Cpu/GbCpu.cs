@@ -435,6 +435,16 @@ namespace GbSharp.Cpu
                 case 0x9E: return SubPtr(true);
                 case 0x9F: return Sub(A, true);
 
+                // AND A, x
+                case 0xA0: return And(BC.High);
+                case 0xA1: return And(BC.Low);
+                case 0xA2: return And(DE.High);
+                case 0xA3: return And(DE.Low);
+                case 0xA4: return And(HL.High);
+                case 0xA5: return And(HL.Low);
+                case 0xA6: return AndPtr();
+                case 0xA7: return And(A);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -979,6 +989,46 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry, !CheckFlag(CpuFlag.Carry));
 
             return 1;
+        }
+
+        /// <summary>
+        /// AND A, source
+        /// </summary>
+        /// <param name="source">The value to AND the accumulator with.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int And(byte source)
+        {
+            ClearFlag(CpuFlag.Negative);
+            SetFlag(CpuFlag.HalfCarry);
+            ClearFlag(CpuFlag.Carry);
+
+            A &= source;
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// AND A, (HL)
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int AndPtr()
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            return And(value) + 1;
+        }
+
+        /// <summary>
+        /// AND A, u8
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int And()
+        {
+            byte value = AdvancePC();
+
+            return And(value) + 1;
         }
 
     }
