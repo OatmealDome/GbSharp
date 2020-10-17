@@ -445,6 +445,16 @@ namespace GbSharp.Cpu
                 case 0xA6: return AndPtr();
                 case 0xA7: return And(A);
 
+                // XOR A, x
+                case 0xA8: return Xor(BC.High);
+                case 0xA9: return Xor(BC.Low);
+                case 0xAA: return Xor(DE.High);
+                case 0xAB: return Xor(DE.Low);
+                case 0xAC: return Xor(HL.High);
+                case 0xAD: return Xor(HL.Low);
+                case 0xAE: return XorPtr();
+                case 0xAF: return Xor(A);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -1029,6 +1039,46 @@ namespace GbSharp.Cpu
             byte value = AdvancePC();
 
             return And(value) + 1;
+        }
+
+        /// <summary>
+        /// XOR A, source
+        /// </summary>
+        /// <param name="source">The value to XOR the accumulator with.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Xor(byte source)
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+            ClearFlag(CpuFlag.Carry);
+
+            A ^= source;
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
+        }
+
+        /// <summary>
+        /// XOR A, (HL)
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int XorPtr()
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            return Xor(value) + 1;
+        }
+
+        /// <summary>
+        /// XOR A, u8
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Xor()
+        {
+            byte value = AdvancePC();
+
+            return Xor(value) + 1;
         }
 
     }
