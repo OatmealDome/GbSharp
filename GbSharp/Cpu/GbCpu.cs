@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -92,15 +92,15 @@ namespace GbSharp.Cpu
             // LD A, 0x8 ; 0b1000
             // LD B, 0x8 ; 0b1000
             // ADD A, B  ; A = A + B
-                //
-                //      1
-                //   0000 1000
-                // + 0000 1000
-                // -----------
-                //   0001 0000
-                //
-                // In this addition operation, the half carry flag will be set.
-                // 
+            //
+            //      1
+            //   0000 1000
+            // + 0000 1000
+            // -----------
+            //   0001 0000
+            //
+            // In this addition operation, the half carry flag will be set.
+            // 
             // An easy way to check to see if the (half) carry flag should
             // be set is to see if the sum of the relevant bits creates a
             // number which can't fit in the same number of bits.
@@ -128,10 +128,10 @@ namespace GbSharp.Cpu
             int mask = (1 << (bit + 1)) - 1;
 
             return (baseVal & mask) + (operand & mask) > mask;
-                }
+        }
 
         private bool CheckBorrowFromBit(int baseVal, int operand, int bit)
-                {
+        {
             // The carry flags are set if there is a borrow from one group
             // of bits to another.
             //
@@ -140,13 +140,13 @@ namespace GbSharp.Cpu
             // LD A, 0x10 ; 0b00010000
             // LD B, 0x8  ; 0b0001000
             // SUB A, B   ; A = A - B
-                //
-                //      - 1
-                //   0001 0000
-                // - 0000 1000
-                // -----------
-                //   0000 1000
-                // 
+            //
+            //      - 1
+            //   0001 0000
+            // - 0000 1000
+            // -----------
+            //   0000 1000
+            //
             // In this subtraction operation, the half carry flag will be
             // set because there is a borrow from bit 4 to 3.
             // 
@@ -265,6 +265,12 @@ namespace GbSharp.Cpu
                 // JR f, s8
                 case 0x28: return Jr(CpuFlag.Zero, true);
                 case 0x38: return Jr(CpuFlag.Carry, true);
+
+                // ADD HL, pair
+                case 0x09: return Add(BC.Value);
+                case 0x19: return Add(DE.Value);
+                case 0x29: return Add(HL.Value);
+                case 0x39: return Add(SP);
 
                 // LD B, x
                 case 0x40: return Ld(BC.High, ref BC.High);
@@ -683,6 +689,27 @@ namespace GbSharp.Cpu
             SetFlag(CpuFlag.Carry);
 
             return 1;
+        }
+
+        /// <summary>
+        /// ADD HL, u16
+        /// 
+        /// Used for both RegisterPairs and SP.
+        /// </summary>
+        /// <param name="value">The value to add.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Add(ushort value)
+        {
+            ClearFlag(CpuFlag.Negative);
+
+            SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(HL.Value, value, 11));
+            SetFlag(CpuFlag.Carry, CheckOverflowOnBit(HL.Value, value, 15));
+
+            HL.Value += value;
+
+            SetFlag(CpuFlag.Zero, HL.Value == 0);
+
+            return 2;
         }
 
     }
