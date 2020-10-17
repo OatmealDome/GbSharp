@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -524,6 +524,13 @@ namespace GbSharp.Cpu
                 // JP u16
                 case 0xC3: return Jp(CpuFlag.None);
 
+                // DI
+                // case 0xF3: ...;
+
+                // CALL Nf, u16
+                case 0xC4: return Call(CpuFlag.Zero, false);
+                case 0xD4: return Call(CpuFlag.Carry, false);
+
                 // PUSH pair
                 case 0xC5: return PushInst(BC);
                 case 0xD5: return PushInst(DE);
@@ -582,6 +589,29 @@ namespace GbSharp.Cpu
                 PC = address;
 
                 return 4;
+            }
+
+            return 3;
+        }
+
+        /// <summary>
+        /// CALL u16
+        /// CALL Cf, u16
+        /// </summary>
+        /// <param name="flag">The CpuFlag to check.</param>
+        /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Call(CpuFlag flag, bool setTo = false)
+        {
+            ushort address = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
+            if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
+            {
+                PushStack(PC);
+
+                PC = address;
+
+                return 6;
             }
 
             return 3;
