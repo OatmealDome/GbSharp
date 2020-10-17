@@ -674,6 +674,16 @@ namespace GbSharp.Cpu
                         case 0x2E: return ShiftPtr(ShiftType.Right);
                         case 0x2F: return Shift(ShiftType.Right, ref A);
 
+                        // SWAP x
+                        case 0x30: return Swap(ref BC.High);
+                        case 0x31: return Swap(ref BC.Low);
+                        case 0x32: return Swap(ref DE.High);
+                        case 0x33: return Swap(ref DE.Low);
+                        case 0x34: return Swap(ref HL.High);
+                        case 0x35: return Swap(ref HL.Low);
+                        case 0x36: return SwapPtr();
+                        case 0x37: return Swap(ref A);
+
                         // SRL
                         case 0x38: return Shift(ShiftType.RightLogical, ref BC.High);
                         case 0x39: return Shift(ShiftType.RightLogical, ref BC.Low);
@@ -1756,6 +1766,54 @@ namespace GbSharp.Cpu
             byte value = AdvancePC();
 
             return Or(value) + 1;
+        }
+
+        /// <summary>
+        /// Swaps the high and low nybbles.
+        /// </summary>
+        /// <param name="b">The byte whose nybbles to swap.</param>
+        /// <returns>The byte with its nybbles swapped.</returns>
+        private byte SwapByte(byte b)
+        {
+            return (byte)(b >> 4 | ((b & 0x0F) << 4));
+        }
+
+        /// <summary>
+        /// SWAP x
+        /// </summary>
+        /// <param name="register">The register containing the nybbles to swap.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private byte Swap(ref byte register)
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+            ClearFlag(CpuFlag.Carry);
+
+            register = SwapByte(register);
+
+            SetFlag(CpuFlag.Zero, register == 0);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// SWAP (HL)
+        /// </summary>
+        /// <returns></returns>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int SwapPtr()
+        {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+            ClearFlag(CpuFlag.Carry);
+
+            byte value = SwapByte(MemoryMap.Read(HL.Value));
+
+            SetFlag(CpuFlag.Zero, value == 0);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 4;
         }
 
     }
