@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -583,6 +583,10 @@ namespace GbSharp.Cpu
                 case 0xCA: return Jp(CpuFlag.Zero, true);
                 case 0xDA: return Jp(CpuFlag.Carry, true);
                 
+                // LD (u16), A
+                case 0xEA: return LdA(false);
+                case 0xFA: return LdA(true);
+
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -894,6 +898,28 @@ namespace GbSharp.Cpu
             SP = HL.Value;
 
             return 2;
+        }
+
+        /// <summary>
+        /// LD (u16), A
+        /// LD A, (u16)
+        /// </summary>
+        /// <param name="store">Whether the accumulator should be stored to the address or written to with the value from the address.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int LdA(bool store)
+        {
+            ushort address = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
+            if (store)
+            {
+                MemoryMap.Write(address, A);
+            }
+            else
+            {
+                A = MemoryMap.Read(address);
+            }
+
+            return 4;
         }
 
         /// <summary>
