@@ -548,6 +548,16 @@ namespace GbSharp.Cpu
 
                 // OR A, u8
                 case 0xF6: return Or();
+
+                // RST vec
+                case 0xC7: return Rst(0x00);
+                case 0xD7: return Rst(0x10);
+                case 0xE7: return Rst(0x10);
+                case 0xF7: return Rst(0x30);
+                case 0xCF: return Rst(0x08);
+                case 0xDF: return Rst(0x18);
+                case 0xEF: return Rst(0x28);
+                case 0xFF: return Rst(0x38);
                 
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
@@ -646,6 +656,20 @@ namespace GbSharp.Cpu
             }
 
             return 2;
+        }
+
+        /// <summary>
+        /// RST vec
+        /// </summary>
+        /// <param name="vec">The RST vector to jump to.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Rst(byte vec)
+        {
+            PushStack(PC);
+
+            PC = vec;
+
+            return 4;
         }
 
         /// <summary>
