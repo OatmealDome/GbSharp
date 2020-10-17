@@ -505,12 +505,24 @@ namespace GbSharp.Cpu
                 // LD A, (FF00 + u8)
                 case 0xF0: return LdUpperMemory(false);
 
+                // POP pair
+                case 0xC1: return PopInst(BC);
+                case 0xD1: return PopInst(DE);
+                case 0xE1: return PopInst(HL);
+                case 0xF1: return PopInstAf();
+
                 // LD (FF00 + C), A
                 case 0xE2: return LdUpperMemory(BC.Low, true);
 
                 // LD A, (FF00 + C)
                 case 0xF2: return LdUpperMemory(BC.Low, false);
 
+                // PUSH pair
+                case 0xC5: return PushInst(BC);
+                case 0xD5: return PushInst(DE);
+                case 0xE5: return PushInst(HL);
+                case 0xF6: return PushInstAf();
+                
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -586,6 +598,55 @@ namespace GbSharp.Cpu
             }
 
             return 2;
+        }
+
+        /// <summary>
+        /// PUSH pair
+        /// </summary>
+        /// <param name="pair">The RegisterPair to push to the stack.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int PushInst(RegisterPair pair)
+        {
+            PushStack(pair.Value);
+
+            return 16;
+        }
+
+        /// <summary>
+        /// PUSH AF
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int PushInstAf()
+        {
+            PushStack((ushort)(A << 8 | F));
+
+            return 16;
+        }
+
+        /// <summary>
+        /// POP pair
+        /// </summary>
+        /// <param name="pair">The RegisterPair to pop from the stack.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int PopInst(RegisterPair pair)
+        {
+            pair.Value = PopStack();
+
+            return 16;
+        }
+
+        /// <summary>
+        /// POP AF
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int PopInstAf()
+        {
+            ushort value = PopStack();
+
+            A = (byte)(value >> 8);
+            F = (byte)(value & 0xFF);
+
+            return 16;
         }
 
         /// <summary>
