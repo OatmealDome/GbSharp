@@ -655,34 +655,34 @@ namespace GbSharp.Cpu
                         case 0x1F: return Rotate(RotationType.Right, ref A, false); // Not RRA
 
                         // SLA
-                        case 0x20: return Sla(ref BC.High);
-                        case 0x21: return Sla(ref BC.Low);
-                        case 0x22: return Sla(ref DE.High);
-                        case 0x23: return Sla(ref DE.Low);
-                        case 0x24: return Sla(ref HL.High);
-                        case 0x25: return Sla(ref HL.Low);
-                        case 0x26: return SlaHl();
-                        case 0x27: return Sla(ref A);
+                        case 0x20: return Shift(ShiftType.Left, ref BC.High);
+                        case 0x21: return Shift(ShiftType.Left, ref BC.Low);
+                        case 0x22: return Shift(ShiftType.Left, ref DE.High);
+                        case 0x23: return Shift(ShiftType.Left, ref DE.Low);
+                        case 0x24: return Shift(ShiftType.Left, ref HL.High);
+                        case 0x25: return Shift(ShiftType.Left, ref HL.Low);
+                        case 0x26: return ShiftPtr(ShiftType.Left);
+                        case 0x27: return Shift(ShiftType.Left, ref A);
 
                         // SRA
-                        case 0x28: return Sra(ref BC.High);
-                        case 0x29: return Sra(ref BC.Low);
-                        case 0x2A: return Sra(ref DE.High);
-                        case 0x2B: return Sra(ref DE.Low);
-                        case 0x2C: return Sra(ref HL.High);
-                        case 0x2D: return Sra(ref HL.Low);
-                        case 0x2E: return SraHl();
-                        case 0x2F: return Sra(ref A);
+                        case 0x28: return Shift(ShiftType.Right, ref BC.High);
+                        case 0x29: return Shift(ShiftType.Right, ref BC.Low);
+                        case 0x2A: return Shift(ShiftType.Right, ref DE.High);
+                        case 0x2B: return Shift(ShiftType.Right, ref DE.Low);
+                        case 0x2C: return Shift(ShiftType.Right, ref HL.High);
+                        case 0x2D: return Shift(ShiftType.Right, ref HL.Low);
+                        case 0x2E: return ShiftPtr(ShiftType.Right);
+                        case 0x2F: return Shift(ShiftType.Right, ref A);
 
                         // SRL
-                        case 0x38: return Srl(ref BC.High);
-                        case 0x39: return Srl(ref BC.Low);
-                        case 0x3A: return Srl(ref DE.High);
-                        case 0x3B: return Srl(ref DE.Low);
-                        case 0x3C: return Srl(ref HL.High);
-                        case 0x3D: return Srl(ref HL.Low);
-                        case 0x3E: return SrlHl();
-                        case 0x3F: return Srl(ref A);
+                        case 0x38: return Shift(ShiftType.RightLogical, ref BC.High);
+                        case 0x39: return Shift(ShiftType.RightLogical, ref BC.Low);
+                        case 0x3A: return Shift(ShiftType.RightLogical, ref DE.High);
+                        case 0x3B: return Shift(ShiftType.RightLogical, ref DE.Low);
+                        case 0x3C: return Shift(ShiftType.RightLogical, ref HL.High);
+                        case 0x3D: return Shift(ShiftType.RightLogical, ref HL.Low);
+                        case 0x3E: return ShiftPtr(ShiftType.RightLogical);
+                        case 0x3F: return Shift(ShiftType.RightLogical, ref A);
 
                         default:
                             throw new Exception($"Invalid opcode 0xCB {opcode} at PC = {PC - 1}");
@@ -1302,38 +1302,18 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
-        /// SLA
+        /// Shifts the byte right and stores the zeroth bit into the carry. The seventh bit is set to its previous value.
         /// </summary>
-        /// <param name="register">The register to shift.</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Sla(ref byte register)
+        /// <param name="b">The byte to rotate.</param>
+        /// <returns>The rotated byte.</returns>
+        private byte SraByte(byte b)
         {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
+            int zerothBit = b & 1;
+            SetFlag(CpuFlag.Carry, zerothBit == 1);
 
-            register = SlaByte(register);
+            int seventhBit = b & 0x80;
 
-            SetFlag(CpuFlag.Zero, register == 0);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// SLA (HL)
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int SlaHl()
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            byte value = SlaByte(MemoryMap.Read(HL.Value));
-
-            SetFlag(CpuFlag.Zero, value == 0);
-
-            MemoryMap.Write(HL.Value, value);
-
-            return 2;
+            return (byte)((b >> 1) | seventhBit);
         }
 
         /// <summary>
@@ -1350,16 +1330,29 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
+        /// SLA
+        /// SRA
         /// SRL
         /// </summary>
         /// <param name="register">The register to shift.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Srl(ref byte register)
+        private int Shift(ShiftType type, ref byte register)
         {
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
 
-            register = SrlByte(register);
+            if (type == ShiftType.Left)
+            {
+                register = SlaByte(register);
+            }
+            else if (type == ShiftType.Right)
+            {
+                register = SraByte(register);
+            }
+            else if (type == ShiftType.RightLogical)
+            {
+                register = SrlByte(register);
+            }
 
             SetFlag(CpuFlag.Zero, register == 0);
 
@@ -1367,65 +1360,30 @@ namespace GbSharp.Cpu
         }
 
         /// <summary>
+        /// SLA (HL)
+        /// SRA (HL)
         /// SRL (HL)
         /// </summary>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int SrlHl()
+        private int ShiftPtr(ShiftType type)
         {
             ClearFlag(CpuFlag.Negative);
             ClearFlag(CpuFlag.HalfCarry);
 
-            byte value = SrlByte(MemoryMap.Read(HL.Value));
+            byte value = MemoryMap.Read(HL.Value);
 
-            SetFlag(CpuFlag.Zero, value == 0);
-
-            MemoryMap.Write(HL.Value, value);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// Shifts the byte right and stores the zeroth bit into the carry. The seventh bit is set to its previous value.
-        /// </summary>
-        /// <param name="b">The byte to rotate.</param>
-        /// <returns>The rotated byte.</returns>
-        private byte SraByte(byte b)
-        {
-            int zerothBit = b & 1;
-            SetFlag(CpuFlag.Carry, zerothBit == 1);
-
-            int seventhBit = b & 0x80;
-
-            return (byte)((b >> 1) | seventhBit);
-        }
-
-        /// <summary>
-        /// SRA
-        /// </summary>
-        /// <param name="register">The register to shift.</param>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Sra(ref byte register)
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            register = SraByte(register);
-
-            SetFlag(CpuFlag.Zero, register == 0);
-
-            return 2;
-        }
-
-        /// <summary>
-        /// SRA (HL)
-        /// </summary>
-        /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int SraHl()
-        {
-            ClearFlag(CpuFlag.Negative);
-            ClearFlag(CpuFlag.HalfCarry);
-
-            byte value = SraByte(MemoryMap.Read(HL.Value));
+            if (type == ShiftType.Left)
+            {
+                value = SlaByte(value);
+            }
+            else if (type == ShiftType.Right)
+            {
+                value = SraByte(value);
+            }
+            else if (type == ShiftType.RightLogical)
+            {
+                value = SrlByte(value);
+            }
 
             SetFlag(CpuFlag.Zero, value == 0);
 
