@@ -760,11 +760,142 @@ namespace GbSharp.Cpu
                         case 0x7E: return BitPtr(7);
                         case 0x7F: return Bit(7, ref A);
 
+                        // RES bit, x
+                        case 0x80: return Res(0, ref BC.High);
+                        case 0x81: return Res(0, ref BC.Low);
+                        case 0x82: return Res(0, ref DE.High);
+                        case 0x83: return Res(0, ref DE.Low);
+                        case 0x84: return Res(0, ref HL.High);
+                        case 0x85: return Res(0, ref HL.Low);
+                        case 0x86: return ResPtr(0);
+                        case 0x87: return Res(0, ref A);
+                        case 0x88: return Res(1, ref BC.High);
+                        case 0x89: return Res(1, ref BC.Low);
+                        case 0x8A: return Res(1, ref DE.High);
+                        case 0x8B: return Res(1, ref DE.Low);
+                        case 0x8C: return Res(1, ref HL.High);
+                        case 0x8D: return Res(1, ref HL.Low);
+                        case 0x8E: return ResPtr(1);
+                        case 0x8F: return Res(1, ref A);
+                        case 0x90: return Res(2, ref BC.High);
+                        case 0x91: return Res(2, ref BC.Low);
+                        case 0x92: return Res(2, ref DE.High);
+                        case 0x93: return Res(2, ref DE.Low);
+                        case 0x94: return Res(2, ref HL.High);
+                        case 0x95: return Res(2, ref HL.Low);
+                        case 0x96: return ResPtr(2);
+                        case 0x97: return Res(2, ref A);
+                        case 0x98: return Res(3, ref BC.High);
+                        case 0x99: return Res(3, ref BC.Low);
+                        case 0x9A: return Res(3, ref DE.High);
+                        case 0x9B: return Res(3, ref DE.Low);
+                        case 0x9C: return Res(3, ref HL.High);
+                        case 0x9D: return Res(3, ref HL.Low);
+                        case 0x9E: return ResPtr(3);
+                        case 0x9F: return Res(3, ref A);
+                        case 0xA0: return Res(4, ref BC.High);
+                        case 0xA1: return Res(4, ref BC.Low);
+                        case 0xA2: return Res(4, ref DE.High);
+                        case 0xA3: return Res(4, ref DE.Low);
+                        case 0xA4: return Res(4, ref HL.High);
+                        case 0xA5: return Res(4, ref HL.Low);
+                        case 0xA6: return ResPtr(4);
+                        case 0xA7: return Res(4, ref A);
+                        case 0xA8: return Res(5, ref BC.High);
+                        case 0xA9: return Res(5, ref BC.Low);
+                        case 0xAA: return Res(5, ref DE.High);
+                        case 0xAB: return Res(5, ref DE.Low);
+                        case 0xAC: return Res(5, ref HL.High);
+                        case 0xAD: return Res(5, ref HL.Low);
+                        case 0xAE: return ResPtr(5);
+                        case 0xAF: return Res(5, ref A);
+                        case 0xB0: return Res(6, ref BC.High);
+                        case 0xB1: return Res(6, ref BC.Low);
+                        case 0xB2: return Res(6, ref DE.High);
+                        case 0xB3: return Res(6, ref DE.Low);
+                        case 0xB4: return Res(6, ref HL.High);
+                        case 0xB5: return Res(6, ref HL.Low);
+                        case 0xB6: return ResPtr(6);
+                        case 0xB7: return Res(6, ref A);
+                        case 0xB8: return Res(7, ref BC.High);
+                        case 0xB9: return Res(7, ref BC.Low);
+                        case 0xBA: return Res(7, ref DE.High);
+                        case 0xBB: return Res(7, ref DE.Low);
+                        case 0xBC: return Res(7, ref HL.High);
+                        case 0xBD: return Res(7, ref HL.Low);
+                        case 0xBE: return ResPtr(7);
+                        case 0xBF: return Res(7, ref A);
+
+                        // SET bit, x
+                        case 0xC0: return Set(0, ref BC.High);
+                        case 0xC1: return Set(0, ref BC.Low);
+                        case 0xC2: return Set(0, ref DE.High);
+                        case 0xC3: return Set(0, ref DE.Low);
+                        case 0xC4: return Set(0, ref HL.High);
+                        case 0xC5: return Set(0, ref HL.Low);
+                        case 0xC6: return SetPtr(0);
+                        case 0xC7: return Set(0, ref A);
+                        case 0xC8: return Set(1, ref BC.High);
+                        case 0xC9: return Set(1, ref BC.Low);
+                        case 0xCA: return Set(1, ref DE.High);
+                        case 0xCB: return Set(1, ref DE.Low);
+                        case 0xCC: return Set(1, ref HL.High);
+                        case 0xCD: return Set(1, ref HL.Low);
+                        case 0xCE: return SetPtr(1);
+                        case 0xCF: return Set(1, ref A);
+                        case 0xD0: return Set(2, ref BC.High);
+                        case 0xD1: return Set(2, ref BC.Low);
+                        case 0xD2: return Set(2, ref DE.High);
+                        case 0xD3: return Set(2, ref DE.Low);
+                        case 0xD4: return Set(2, ref HL.High);
+                        case 0xD5: return Set(2, ref HL.Low);
+                        case 0xD6: return SetPtr(2);
+                        case 0xD7: return Set(2, ref A);
+                        case 0xD8: return Set(3, ref BC.High);
+                        case 0xD9: return Set(3, ref BC.Low);
+                        case 0xDA: return Set(3, ref DE.High);
+                        case 0xDB: return Set(3, ref DE.Low);
+                        case 0xDC: return Set(3, ref HL.High);
+                        case 0xDD: return Set(3, ref HL.Low);
+                        case 0xDE: return SetPtr(3);
+                        case 0xDF: return Set(3, ref A);
+                        case 0xE0: return Set(4, ref BC.High);
+                        case 0xE1: return Set(4, ref BC.Low);
+                        case 0xE2: return Set(4, ref DE.High);
+                        case 0xE3: return Set(4, ref DE.Low);
+                        case 0xE4: return Set(4, ref HL.High);
+                        case 0xE5: return Set(4, ref HL.Low);
+                        case 0xE6: return SetPtr(4);
+                        case 0xE7: return Set(4, ref A);
+                        case 0xE8: return Set(5, ref BC.High);
+                        case 0xE9: return Set(5, ref BC.Low);
+                        case 0xEA: return Set(5, ref DE.High);
+                        case 0xEB: return Set(5, ref DE.Low);
+                        case 0xEC: return Set(5, ref HL.High);
+                        case 0xED: return Set(5, ref HL.Low);
+                        case 0xEE: return SetPtr(5);
+                        case 0xEF: return Set(5, ref A);
+                        case 0xF0: return Set(6, ref BC.High);
+                        case 0xF1: return Set(6, ref BC.Low);
+                        case 0xF2: return Set(6, ref DE.High);
+                        case 0xF3: return Set(6, ref DE.Low);
+                        case 0xF4: return Set(6, ref HL.High);
+                        case 0xF5: return Set(6, ref HL.Low);
+                        case 0xF6: return SetPtr(6);
+                        case 0xF7: return Set(6, ref A);
+                        case 0xF8: return Set(7, ref BC.High);
+                        case 0xF9: return Set(7, ref BC.Low);
+                        case 0xFA: return Set(7, ref DE.High);
+                        case 0xFB: return Set(7, ref DE.Low);
+                        case 0xFC: return Set(7, ref HL.High);
+                        case 0xFD: return Set(7, ref HL.Low);
+                        case 0xFE: return SetPtr(7);
+                        case 0xFF: return Set(7, ref A);
+
                         default:
                             throw new Exception($"Invalid opcode 0xCB {opcode} at PC = {PC - 1}");
                     }
 
-                
                 default:
                     throw new Exception($"Invalid opcode {opcode} at PC = {PC - 1}");
             }
@@ -1921,6 +2052,84 @@ namespace GbSharp.Cpu
             Bit(bit, MemoryMap.Read(HL.Value));
 
             return 3;
+        }
+
+        /// <summary>
+        /// Sets the specified bit to zero.
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <param name="b">The target byte.</param>
+        private void ResByte(int bit, ref byte b)
+        {
+            b &= (byte)~(1 << bit);
+        }
+
+        /// <summary>
+        /// RES bit, x
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <param name="register">The register containing the target byte.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Res(int bit, ref byte register)
+        {
+            ResByte(bit, ref register);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// RES bit, (HL)
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int ResPtr(int bit)
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            ResByte(bit, ref value);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 4;
+        }
+
+        /// <summary>
+        /// Sets the specified bit to one.
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <param name="b">The target byte.</param>
+        private void SetByte(int bit, ref byte b)
+        {
+            b |= (byte)(1 << bit);
+        }
+
+        /// <summary>
+        /// SET bit, x
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <param name="register">The register containing the target byte.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Set(int bit, ref byte register)
+        {
+            SetByte(bit, ref register);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// SET bit, (HL)
+        /// </summary>
+        /// <param name="bit">The bit to set.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int SetPtr(int bit)
+        {
+            byte value = MemoryMap.Read(HL.Value);
+
+            SetByte(bit, ref value);
+
+            MemoryMap.Write(HL.Value, value);
+
+            return 4;
         }
 
     }
