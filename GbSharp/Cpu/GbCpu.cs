@@ -694,6 +694,72 @@ namespace GbSharp.Cpu
                         case 0x3E: return ShiftPtr(ShiftType.RightLogical);
                         case 0x3F: return Shift(ShiftType.RightLogical, ref A);
 
+                        // BIT bit, x
+                        case 0x40: return Bit(0, ref BC.High);
+                        case 0x41: return Bit(0, ref BC.Low);
+                        case 0x42: return Bit(0, ref DE.High);
+                        case 0x43: return Bit(0, ref DE.Low);
+                        case 0x44: return Bit(0, ref HL.High);
+                        case 0x45: return Bit(0, ref HL.Low);
+                        case 0x46: return BitPtr(0);
+                        case 0x47: return Bit(0, ref A);
+                        case 0x48: return Bit(1, ref BC.High);
+                        case 0x49: return Bit(1, ref BC.Low);
+                        case 0x4A: return Bit(1, ref DE.High);
+                        case 0x4B: return Bit(1, ref DE.Low);
+                        case 0x4C: return Bit(1, ref HL.High);
+                        case 0x4D: return Bit(1, ref HL.Low);
+                        case 0x4E: return BitPtr(1);
+                        case 0x4F: return Bit(1, ref A);
+                        case 0x50: return Bit(2, ref BC.High);
+                        case 0x51: return Bit(2, ref BC.Low);
+                        case 0x52: return Bit(2, ref DE.High);
+                        case 0x53: return Bit(2, ref DE.Low);
+                        case 0x54: return Bit(2, ref HL.High);
+                        case 0x55: return Bit(2, ref HL.Low);
+                        case 0x56: return BitPtr(2);
+                        case 0x57: return Bit(2, ref A);
+                        case 0x58: return Bit(3, ref BC.High);
+                        case 0x59: return Bit(3, ref BC.Low);
+                        case 0x5A: return Bit(3, ref DE.High);
+                        case 0x5B: return Bit(3, ref DE.Low);
+                        case 0x5C: return Bit(3, ref HL.High);
+                        case 0x5D: return Bit(3, ref HL.Low);
+                        case 0x5E: return BitPtr(3);
+                        case 0x5F: return Bit(3, ref A);
+                        case 0x60: return Bit(4, ref BC.High);
+                        case 0x61: return Bit(4, ref BC.Low);
+                        case 0x62: return Bit(4, ref DE.High);
+                        case 0x63: return Bit(4, ref DE.Low);
+                        case 0x64: return Bit(4, ref HL.High);
+                        case 0x65: return Bit(4, ref HL.Low);
+                        case 0x66: return BitPtr(4);
+                        case 0x67: return Bit(4, ref A);
+                        case 0x68: return Bit(5, ref BC.High);
+                        case 0x69: return Bit(5, ref BC.Low);
+                        case 0x6A: return Bit(5, ref DE.High);
+                        case 0x6B: return Bit(5, ref DE.Low);
+                        case 0x6C: return Bit(5, ref HL.High);
+                        case 0x6D: return Bit(5, ref HL.Low);
+                        case 0x6E: return BitPtr(5);
+                        case 0x6F: return Bit(5, ref A);
+                        case 0x70: return Bit(6, ref BC.High);
+                        case 0x71: return Bit(6, ref BC.Low);
+                        case 0x72: return Bit(6, ref DE.High);
+                        case 0x73: return Bit(6, ref DE.Low);
+                        case 0x74: return Bit(6, ref HL.High);
+                        case 0x75: return Bit(6, ref HL.Low);
+                        case 0x76: return BitPtr(6);
+                        case 0x77: return Bit(6, ref A);
+                        case 0x78: return Bit(7, ref BC.High);
+                        case 0x79: return Bit(7, ref BC.Low);
+                        case 0x7A: return Bit(7, ref DE.High);
+                        case 0x7B: return Bit(7, ref DE.Low);
+                        case 0x7C: return Bit(7, ref HL.High);
+                        case 0x7D: return Bit(7, ref HL.Low);
+                        case 0x7E: return BitPtr(7);
+                        case 0x7F: return Bit(7, ref A);
+
                         default:
                             throw new Exception($"Invalid opcode 0xCB {opcode} at PC = {PC - 1}");
                     }
@@ -1814,6 +1880,47 @@ namespace GbSharp.Cpu
             MemoryMap.Write(HL.Value, value);
 
             return 4;
+        }
+
+        /// <summary>
+        /// Sets the zero flag if the specified bit is zero.
+        /// </summary>
+        /// <param name="bit">The bit to check.</param>
+        /// <param name="b">The target byte.</param>
+        private void Bit(int bit, byte b)
+        {
+            SetFlag(CpuFlag.Zero, (b & (1 << bit)) == 0);
+        }
+
+        /// <summary>
+        /// BIT bit, register
+        /// </summary>
+        /// <param name="bit">The bit to check.</param>
+        /// <param name="register">The register containing the target byte.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Bit(int bit, ref byte register)
+        {
+            ClearFlag(CpuFlag.Negative);
+            SetFlag(CpuFlag.HalfCarry);
+
+            Bit(bit, register);
+
+            return 2;
+        }
+
+        /// <summary>
+        /// BIT bit, (HL)
+        /// </summary>
+        /// <param name="bit">The bit to check.</param>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int BitPtr(int bit)
+        {
+            ClearFlag(CpuFlag.Negative);
+            SetFlag(CpuFlag.HalfCarry);
+
+            Bit(bit, MemoryMap.Read(HL.Value));
+
+            return 3;
         }
 
     }
