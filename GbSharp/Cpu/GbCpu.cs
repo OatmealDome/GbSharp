@@ -1689,6 +1689,9 @@ namespace GbSharp.Cpu
         /// <returns></returns>
         private int Scf()
         {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
             SetFlag(CpuFlag.Carry);
 
             return 1;
@@ -1907,6 +1910,9 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Cpl()
         {
+            SetFlag(CpuFlag.Negative);
+            SetFlag(CpuFlag.HalfCarry);
+
             A = (byte)~A;
 
             return 1;
@@ -1918,6 +1924,9 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Ccf()
         {
+            ClearFlag(CpuFlag.Negative);
+            ClearFlag(CpuFlag.HalfCarry);
+
             SetFlag(CpuFlag.Carry, !CheckFlag(CpuFlag.Carry));
 
             return 1;
