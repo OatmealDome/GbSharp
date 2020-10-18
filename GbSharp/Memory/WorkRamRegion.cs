@@ -29,28 +29,33 @@ namespace GbSharp.Memory
             }
         }
 
-        private int GetBankForOffset(ushort offset)
+        private bool OffsetInSwitchableBank(ushort offset)
         {
-            if (MathUtil.InRange(offset, 0x1000, BANK_SIZE))
-            {
-                return CurrentSwitchableBank;
-            }
-
-            return 0;
+            return MathUtil.InRange(offset, (ushort)BANK_SIZE, BANK_SIZE - 1);
         }
 
         public override byte Read(ushort offset)
         {
-            int bankIdx = GetBankForOffset(offset);
+            int bankIdx = 0;
+            if (OffsetInSwitchableBank(offset))
+            {
+                bankIdx = CurrentSwitchableBank;
+                offset -= (ushort)BANK_SIZE;
+            }
 
-            return Banks[CurrentSwitchableBank][bankIdx];
+            return Banks[bankIdx][offset];
         }
 
         public override void Write(ushort offset, byte val)
         {
-            int bankIdx = GetBankForOffset(offset);
+            int bankIdx = 0;
+            if (OffsetInSwitchableBank(offset))
+            {
+                bankIdx = CurrentSwitchableBank;
+                offset -= (ushort)BANK_SIZE;
+            }
 
-            Banks[CurrentSwitchableBank][bankIdx] = val;
+            Banks[bankIdx][offset] = val;
         }
 
     }
