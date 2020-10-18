@@ -1,4 +1,5 @@
-﻿using GbSharp.Memory;
+﻿using GbSharp.Cpu.Timer;
+using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -18,6 +19,7 @@ namespace GbSharp.Cpu
         private byte EnabledInterrupts;
         private byte RaisedInterrupts;
 
+        private readonly GbCpuTimer Timer;
         private readonly GbMemory MemoryMap;
 
         public GbCpu(GbMemory memory)
@@ -40,6 +42,7 @@ namespace GbSharp.Cpu
             MemoryMap.RegisterMmio(0xFFFF, () => EnabledInterrupts, x => EnabledInterrupts = x);
             MemoryMap.RegisterMmio(0xFF0F, () => RaisedInterrupts, x => RaisedInterrupts = x);
 
+            Timer = new GbCpuTimer(this, memory);
             MemoryMap = memory;
         }
 
@@ -69,7 +72,11 @@ namespace GbSharp.Cpu
                 InterruptsWillBeEnabled = false;
             }
 
-            return ExecuteInstruction();
+            int cycles = ExecuteInstruction();
+
+            Timer.Tick(cycles);
+
+            return cycles;
         }
 
         private byte AdvancePC()
@@ -228,6 +235,11 @@ namespace GbSharp.Cpu
             SP++;
 
             return value;
+        }
+
+        public void RaiseInterrupt(int bit)
+        {
+            MathUtil.SetBit(ref RaisedInterrupts, bit);
         }
 
         /// <summary>
