@@ -9,7 +9,7 @@ namespace GbSharp
 
         public static bool InRange(ushort value, ushort start, int size)
         {
-            return InRange(value, start, start + size);
+            return InRange(value, start, (ushort)(start + size));
         }
 
         public static bool IsBitSet(byte b, int bit)
