@@ -622,8 +622,8 @@ namespace GbSharp.Cpu
                 case 0xDA: return Jp(CpuFlag.Carry, true);
 
                 // LD (u16), A
-                case 0xEA: return LdA(false);
-                case 0xFA: return LdA(true);
+                case 0xEA: return LdA(true);
+                case 0xFA: return LdA(false);
 
                 // EI
                 case 0xFB: return Ei();
