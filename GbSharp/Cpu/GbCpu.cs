@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 
 namespace GbSharp.Cpu
@@ -13,7 +13,10 @@ namespace GbSharp.Cpu
         private readonly RegisterPair DE;
         private readonly RegisterPair HL;
 
+        private bool InterruptsEnabled;
+        private bool InterruptsWillBeEnabled; // EI is delayed by one instruction
         private byte EnabledInterrupts;
+        private byte RaisedInterrupts;
 
         private readonly GbMemory MemoryMap;
 
@@ -28,10 +31,45 @@ namespace GbSharp.Cpu
             DE = new RegisterPair();
             HL = new RegisterPair();
 
+            InterruptsEnabled = false;
+            InterruptsWillBeEnabled = false;
+            EnabledInterrupts = 0;
+            RaisedInterrupts = 0;
+
             // Register MMIO
             MemoryMap.RegisterMmio(0xFFFF, () => EnabledInterrupts, x => EnabledInterrupts = x);
+            MemoryMap.RegisterMmio(0xFF0F, () => RaisedInterrupts, x => RaisedInterrupts = x);
 
             MemoryMap = memory;
+        }
+
+        public int Step()
+        {
+            if (InterruptsEnabled)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (MathUtil.IsBitSet(RaisedInterrupts, i))
+                    {
+                        if (MathUtil.IsBitSet(EnabledInterrupts, i))
+                        {
+                            PushStack(PC);
+
+                            PC = (ushort)(0x40 + (i * 0x8));
+
+                            MathUtil.ClearBit(ref RaisedInterrupts, i);
+                        }
+                    }
+                }
+            }
+
+            if (InterruptsWillBeEnabled)
+            {
+                InterruptsEnabled = true;
+                InterruptsWillBeEnabled = false;
+            }
+
+            return ExecuteInstruction();
         }
 
         private byte AdvancePC()
@@ -196,7 +234,7 @@ namespace GbSharp.Cpu
         /// Advances the CPU by one instruction.
         /// </summary>
         /// <returns>The number of CPU cycles taken to execute this instruction.</returns>
-        public int Step()
+        public int ExecuteInstruction()
         {
             byte opcode = AdvancePC();
             switch (opcode)
@@ -513,7 +551,7 @@ namespace GbSharp.Cpu
                 case 0xC3: return Jp(CpuFlag.None);
 
                 // DI
-                // case 0xF3: ...;
+                case 0xF3: return Di();
 
                 // CALL Nf, u16
                 case 0xC4: return Call(CpuFlag.Zero, false);
@@ -559,7 +597,7 @@ namespace GbSharp.Cpu
                 case 0xC9: return Ret(CpuFlag.None);
 
                 // RETI
-                // case 0xD9: return Reti(CpuFlag.None);
+                case 0xD9: return Ret(CpuFlag.None, false, true);
 
                 // JP HL
                 case 0xE9: return JpHl();
@@ -576,7 +614,7 @@ namespace GbSharp.Cpu
                 case 0xFA: return LdA(true);
 
                 // EI
-                // case 0xFB: ...;
+                case 0xFB: return Ei();
 
                 // CALL f, u16
                 case 0xCC: return Call(CpuFlag.Zero, true);
@@ -981,14 +1019,20 @@ namespace GbSharp.Cpu
         /// </summary>
         /// <param name="flag">The CpuFlag to check.</param>
         /// <param name="setTo">The value of the CpuFlag needed to execute the jump</param>
+        /// <param name="enableInterrupts">If interrupts should be enabled after this instruction.</param>
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
-        private int Ret(CpuFlag flag, bool setTo = false)
+        private int Ret(CpuFlag flag, bool setTo = false, bool enableInterrupts = false)
         {
             if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
                 PC = PopStack();
 
                 return flag == CpuFlag.None ? 4 : 5;
+            }
+
+            if (enableInterrupts)
+            {
+                InterruptsEnabled = true;
             }
 
             return 2;
@@ -1006,6 +1050,29 @@ namespace GbSharp.Cpu
             PC = vec;
 
             return 4;
+        }
+
+        /// <summary>
+        /// EI
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Ei()
+        {
+            InterruptsWillBeEnabled = true;
+
+            return 1;
+        }
+
+        /// <summary>
+        /// DI
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Di()
+        {
+            InterruptsEnabled = false;
+            InterruptsWillBeEnabled = false;
+
+            return 1;
         }
 
         /// <summary>
