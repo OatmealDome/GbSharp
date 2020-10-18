@@ -1,4 +1,4 @@
-﻿using GbSharp.Cpu.Timer;
+using GbSharp.Cpu.Timer;
 using GbSharp.Memory;
 using System;
 
@@ -38,12 +38,12 @@ namespace GbSharp.Cpu
             EnabledInterrupts = 0;
             RaisedInterrupts = 0;
 
+            Timer = new GbCpuTimer(this, memory);
+            MemoryMap = memory;
+
             // Register MMIO
             MemoryMap.RegisterMmio(0xFFFF, () => EnabledInterrupts, x => EnabledInterrupts = x);
             MemoryMap.RegisterMmio(0xFF0F, () => RaisedInterrupts, x => RaisedInterrupts = x);
-
-            Timer = new GbCpuTimer(this, memory);
-            MemoryMap = memory;
         }
 
         public int Step()
