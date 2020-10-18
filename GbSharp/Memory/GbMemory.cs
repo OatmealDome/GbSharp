@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace GbSharp.Memory
@@ -26,11 +26,11 @@ namespace GbSharp.Memory
             MemoryRegions = new Dictionary<Tuple<ushort, int>, MemoryRegion>();
 
             WorkRamRegion workRam = new WorkRamRegion();
-            RegisterRegion(0xC000, 0x2000, workRam);
-            RegisterRegion(0xE000, 0x1E00, workRam); // Echo
+            RegisterRegion(0xC000, 0x1FFF, workRam);
+            RegisterRegion(0xE000, 0x1DFF, workRam); // Echo
 
             HighSpeedRamRegion highSpeedRam = new HighSpeedRamRegion();
-            RegisterRegion(0xFF80, 0x7F, highSpeedRam);
+            RegisterRegion(0xFF80, 0x7E, highSpeedRam);
         }
 
         public void RegisterRegion(ushort address, int size, MemoryRegion region)
