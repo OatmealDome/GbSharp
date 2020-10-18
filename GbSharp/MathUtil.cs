@@ -1,4 +1,4 @@
-﻿namespace GbSharp
+namespace GbSharp
 {
     internal class MathUtil
     {
@@ -19,7 +19,7 @@
             // mask   0001 0000
             // AND    0001 0000
             int mask = 1 << bit;
-            return (bit & mask) == mask;
+            return (b & mask) == mask;
         }
 
         public static void SetBit(ref byte b, int bit)
