@@ -263,9 +263,9 @@ namespace GbSharp.Cpu
 
                 // LD pair, u16
                 case 0x01: return Ld(BC);
-                case 0x11: return Ld(BC);
-                case 0x21: return Ld(BC);
-                case 0x31: return Ld(BC);
+                case 0x11: return Ld(DE);
+                case 0x21: return Ld(HL);
+                case 0x31: return LdSp();
 
                 // LD (pair), A
                 case 0x02: return Ld(A, BC);
@@ -1217,6 +1217,17 @@ namespace GbSharp.Cpu
             register = AdvancePC();
 
             return 2;
+        }
+
+        /// <summary>
+        /// LD SP, u16
+        /// </summary>
+        /// <returns></returns>
+        private int LdSp()
+        {
+            SP = (ushort)(AdvancePC() | (AdvancePC() << 8));
+
+            return 3;
         }
 
         /// <summary>
