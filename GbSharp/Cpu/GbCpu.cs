@@ -1877,7 +1877,7 @@ namespace GbSharp.Cpu
         {
             byte value = AdvancePC();
 
-            return Sub(value, addCarry) + 1;
+            return Sub(value, addCarry, storeResult) + 1;
         }
 
         /// <summary>
