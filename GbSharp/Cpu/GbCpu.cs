@@ -1899,8 +1899,6 @@ namespace GbSharp.Cpu
 
             HL.Value += value;
 
-            SetFlag(CpuFlag.Zero, HL.Value == 0);
-
             return 2;
         }
 
