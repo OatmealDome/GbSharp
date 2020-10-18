@@ -1236,8 +1236,9 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int LdSpToAddress()
         {
-            MemoryMap.Write(AdvancePC(), (byte)(SP & 0xFF));
-            MemoryMap.Write(AdvancePC(), (byte)(SP >> 8));
+            ushort address = (ushort)(AdvancePC() | AdvancePC() << 8);
+            MemoryMap.Write(address, (byte)(SP & 0xFF));
+            MemoryMap.Write((ushort)(address + 1), (byte)(SP >> 8));
 
             return 5;
         }
