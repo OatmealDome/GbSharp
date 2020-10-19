@@ -1826,8 +1826,8 @@ namespace GbSharp.Cpu
 
             sbyte offset = (sbyte)AdvancePC();
 
-            CheckOverflowOnBit(SP, offset, 3);
-            CheckOverflowOnBit(SP, offset, 7);
+            SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(SP, offset, 3));
+            SetFlag(CpuFlag.Carry, CheckOverflowOnBit(SP, offset, 7));
 
             ushort newAddress = (ushort)(SP + offset);
             if (storeHl)
