@@ -114,7 +114,7 @@ namespace GbSharp.Cpu
             }
         }
 
-        private bool CheckOverflowOnBit(int baseVal, int operand, int bit)
+        private bool CheckOverflowOnBit(int baseVal, int operand, int bit, int carryVal = 0)
         {
             // The carry flags are set if there is a carry from one group
             // of bits to another.
@@ -159,10 +159,10 @@ namespace GbSharp.Cpu
 
             int mask = (1 << (bit + 1)) - 1;
 
-            return (baseVal & mask) + (operand & mask) > mask;
+            return ((baseVal & mask) + (operand & mask) + carryVal) > mask;
         }
 
-        private bool CheckBorrowFromBit(int baseVal, int operand, int bit)
+        private bool CheckBorrowFromBit(int baseVal, int operand, int bit, int carryVal = 0)
         {
             // The carry flags are set if there is a borrow from one group
             // of bits to another.
@@ -214,7 +214,7 @@ namespace GbSharp.Cpu
 
             int mask = (1 << bit) - 1;
 
-            return (baseVal & mask) - (operand & mask) < 0;
+            return ((baseVal & mask) - (operand & mask) - carryVal) < 0;
         }
 
         private void PushStack(ushort value)
@@ -1753,33 +1753,12 @@ namespace GbSharp.Cpu
         {
             ClearFlag(CpuFlag.Negative);
 
-            bool halfCarry = false;
-            bool carry = false;
+            int carry = CheckFlag(CpuFlag.Carry) && addCarry ? 1 : 0;
 
-            if (addCarry)
-            {
-                byte carryVal = (byte)(CheckFlag(CpuFlag.Carry) ? 1 : 0);
+            SetFlag(CpuFlag.HalfCarry, CheckOverflowOnBit(A, source, 3, carry));
+            SetFlag(CpuFlag.Carry, CheckOverflowOnBit(A, source, 7, carry));
 
-                halfCarry = CheckOverflowOnBit(A, 1, 3);
-                carry = CheckOverflowOnBit(A, 1, 7);
-
-                A += carryVal;
-            }
-
-            if (!halfCarry)
-            {
-                halfCarry = CheckOverflowOnBit(A, source, 3);
-            }
-
-            if (!carry)
-            {
-                carry = CheckOverflowOnBit(A, source, 7);
-            }
-
-            A += source;
-
-            SetFlag(CpuFlag.HalfCarry, halfCarry);
-            SetFlag(CpuFlag.Carry, carry);
+            A += (byte)(source + carry);
 
             SetFlag(CpuFlag.Zero, A == 0);
 
@@ -1857,35 +1836,14 @@ namespace GbSharp.Cpu
         {
             SetFlag(CpuFlag.Negative);
 
-            bool halfCarry = false;
-            bool carry = false;
-
             byte val = A;
 
-            if (subtractCarry)
-            {
-                byte carryVal = (byte)(CheckFlag(CpuFlag.Carry) ? 1 : 0);
+            int carry = CheckFlag(CpuFlag.Carry) && subtractCarry ? 1 : 0;
 
-                halfCarry = CheckBorrowFromBit(A, 1, 4);
-                carry = carryVal > A;
+            SetFlag(CpuFlag.HalfCarry, CheckBorrowFromBit(val, source, 4, carry));
+            SetFlag(CpuFlag.Carry, CheckBorrowFromBit(val, source, 8, carry));
 
-                val -= carryVal;
-            }
-
-            if (!halfCarry)
-            {
-                halfCarry = CheckBorrowFromBit(A, source, 4);
-            }
-
-            if (!carry)
-            {
-                carry = source > A;
-            }
-
-            val -= source;
-
-            SetFlag(CpuFlag.HalfCarry, halfCarry);
-            SetFlag(CpuFlag.Carry, carry);
+            val = (byte)(val - source - carry);
 
             SetFlag(CpuFlag.Zero, val == 0);
 
