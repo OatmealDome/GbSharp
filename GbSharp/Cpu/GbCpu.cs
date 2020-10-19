@@ -308,7 +308,7 @@ namespace GbSharp.Cpu
                 case 0x17: return Rotate(RotationType.Left, ref A, true);
 
                 // DAA
-                // case 0x27: ...;
+                case 0x27: return Daa();
 
                 // SCF
                 case 0x37: return Scf();
@@ -1682,6 +1682,50 @@ namespace GbSharp.Cpu
             MemoryMap.Write(HL.Value, value);
 
             return 4;
+        }
+
+        /// <summary>
+        /// DAA
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Daa()
+        {
+            // With thanks to AWJ for the information on BCD and a reference implementation.
+            //https://forums.nesdev.com/viewtopic.php?t=15944
+            // Also, thanks to Eric Haskins for their DAA "rule list":
+            // https://ehaskins.com/2018-01-30%20Z80%20DAA/
+            if (!CheckFlag(CpuFlag.Negative))
+            {
+                if (CheckFlag(CpuFlag.Carry) || A > 0x99)
+                {
+                    A += 0x60;
+
+                    SetFlag(CpuFlag.Carry);
+                }
+
+                if (CheckFlag(CpuFlag.HalfCarry) || (A & 0xF) > 0x9)
+                {
+                    A += 0x6;
+                }
+            }
+            else // Subtraction
+            {
+                if (CheckFlag(CpuFlag.Carry))
+                {
+                    A -= 0x60;
+                }
+
+                if (CheckFlag(CpuFlag.HalfCarry))
+                {
+                    A -= 0x6;
+                }
+            }
+
+            ClearFlag(CpuFlag.HalfCarry);
+
+            SetFlag(CpuFlag.Zero, A == 0);
+
+            return 1;
         }
 
         /// <summary>
