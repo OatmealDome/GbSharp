@@ -1411,7 +1411,7 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int DecSp()
         {
-            SP++;
+            SP--;
 
             return 2;
         }
