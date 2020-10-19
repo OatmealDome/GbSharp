@@ -1131,7 +1131,7 @@ namespace GbSharp.Cpu
             ushort value = PopStack();
 
             A = (byte)(value >> 8);
-            F = (byte)(value & 0xFF);
+            F = (byte)(value & 0xF0); // first four bits of F can't be written to
 
             return 3;
         }
