@@ -14,6 +14,9 @@ namespace GbSharp.Cpu
         private readonly RegisterPair DE;
         private readonly RegisterPair HL;
 
+        private bool Halted;
+        private bool HaltBug;
+
         private bool InterruptsEnabled;
         private bool InterruptsWillBeEnabled; // EI is delayed by one instruction
         private byte EnabledInterrupts;
@@ -32,6 +35,9 @@ namespace GbSharp.Cpu
             BC = new RegisterPair();
             DE = new RegisterPair();
             HL = new RegisterPair();
+
+            Halted = false;
+            HaltBug = false;
 
             InterruptsEnabled = false;
             InterruptsWillBeEnabled = false;
@@ -61,6 +67,8 @@ namespace GbSharp.Cpu
                             PC = (ushort)(0x40 + (i * 0x8));
 
                             MathUtil.ClearBit(ref RaisedInterrupts, i);
+
+                            Halted = false;
                         }
                     }
                 }
@@ -72,7 +80,20 @@ namespace GbSharp.Cpu
                 InterruptsWillBeEnabled = false;
             }
 
-            int cycles = ExecuteInstruction();
+            int cycles;
+            if (Halted)
+            {
+                if (!InterruptsEnabled && (EnabledInterrupts & RaisedInterrupts) != 0)
+                {
+                    Halted = false;
+                }
+
+                cycles = 1;
+            }
+            else
+            {
+                cycles = ExecuteInstruction();
+            }
 
             Timer.Tick(cycles);
 
@@ -249,6 +270,20 @@ namespace GbSharp.Cpu
         public int ExecuteInstruction()
         {
             byte opcode = AdvancePC();
+
+            // When HALT is executed while interrupts are disabled and there are interrupts pending,
+            // the CPU will continue executing code past the HALT instruction. However, the PC will
+            // *not* advance after reading the next opcode because of a bug in the SoC. This means
+            // the next instruction will be executed twice for single byte instructions, and multi-
+            // byte instructions will be interpreted incorrectly (operands will be considered as
+            // their own instruction).
+            if (HaltBug)
+            {
+                PC--;
+
+                HaltBug = false;
+            }
+
             switch (opcode)
             {
                 // NOP
@@ -441,7 +476,7 @@ namespace GbSharp.Cpu
                 case 0x77: return Ld(A, HL);
 
                 // HALT
-                // case 0x76: ...;
+                case 0x76: return Halt();
 
                 // LD A, x
                 case 0x78: return Ld(BC.High, ref A);
@@ -946,6 +981,24 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Nop()
         {
+            return 1;
+        }
+
+        /// <summary>
+        /// HALT
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Halt()
+        {
+            if (!InterruptsEnabled && (EnabledInterrupts & RaisedInterrupts) != 0)
+            {
+                HaltBug = true;
+            }
+            else
+            {
+                Halted = true;
+            }
+
             return 1;
         }
 
