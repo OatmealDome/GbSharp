@@ -247,6 +247,10 @@ namespace GbSharp.Ppu
                         {
                             ChangePpuMode(PpuMode.VBlank);
                         }
+                        else
+                        {
+                            ChangePpuMode(PpuMode.OamScan);
+                    }
                     }
 
                     break;
