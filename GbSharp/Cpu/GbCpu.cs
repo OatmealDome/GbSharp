@@ -76,6 +76,9 @@ namespace GbSharp.Cpu
                             // Interrupt handling takes 4 M-cycles:
                             // https://mgba-emu.github.io/gbdoc/#irq
                             cycles += 4;
+
+                            // One interrupt at a time
+                            break;
                         }
                     }
                 }
