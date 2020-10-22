@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
 namespace GbSharp.Cpu.Timer
 {
@@ -101,7 +101,11 @@ namespace GbSharp.Cpu.Timer
                     break;
             }
 
-            if (TimerCycleCount >= cyclesToNextTick)
+            // Tick the timer as much as needed.
+            //
+            // Thanks to euclio for detailing this common bug:
+            // https://github.com/feo-boy/feo-boy/blob/master/src/bus/timer.rs#L56-L81
+            while (TimerCycleCount >= cyclesToNextTick)
             {
                 Counter++;
 
