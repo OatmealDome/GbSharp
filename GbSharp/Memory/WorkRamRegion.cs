@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace GbSharp.Memory
 {
@@ -31,7 +31,7 @@ namespace GbSharp.Memory
 
         private bool OffsetInSwitchableBank(ushort offset)
         {
-            return MathUtil.InRange(offset, (ushort)BANK_SIZE, BANK_SIZE - 1);
+            return MathUtil.InRange(offset, (ushort)BANK_SIZE, BANK_SIZE);
         }
 
         public override byte Read(ushort offset)
