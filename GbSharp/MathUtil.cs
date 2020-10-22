@@ -36,5 +36,10 @@ namespace GbSharp
             b &= (byte)~(1 << bit);
         }
 
+        public static int GetBit(byte b, int bit)
+        {
+            return IsBitSet(b, bit) ? 1 : 0;
+        }
+
     }
 }
