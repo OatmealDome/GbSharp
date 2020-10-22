@@ -54,6 +54,8 @@ namespace GbSharp.Cpu
 
         public int Step()
         {
+            int cycles = 0;
+
             if (InterruptsEnabled)
             {
                 for (int i = 0; i < 5; i++)
@@ -70,6 +72,10 @@ namespace GbSharp.Cpu
 
                             Halted = false;
                             InterruptsEnabled = false;
+
+                            // Interrupt handling takes 4 M-cycles:
+                            // https://mgba-emu.github.io/gbdoc/#irq
+                            cycles += 4;
                         }
                     }
                 }
@@ -81,7 +87,6 @@ namespace GbSharp.Cpu
                 InterruptsWillBeEnabled = false;
             }
 
-            int cycles;
             if (Halted)
             {
                 if (!InterruptsEnabled && (EnabledInterrupts & RaisedInterrupts) != 0)
@@ -93,7 +98,7 @@ namespace GbSharp.Cpu
             }
             else
             {
-                cycles = ExecuteInstruction();
+                cycles += ExecuteInstruction();
             }
 
             Timer.Tick(cycles);
