@@ -1,4 +1,4 @@
-﻿using GbSharp.Cpu;
+using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
@@ -220,7 +220,7 @@ namespace GbSharp.Ppu
             switch (CurrentMode)
             {
                 case PpuMode.OamScan:
-                    if (CurrentScanlineCyclePosition == 80)
+                    if (CurrentScanlineCyclePosition == 20)
                     {
                         ChangePpuMode(PpuMode.PictureGeneration);
                     }
