@@ -1112,16 +1112,16 @@ namespace GbSharp.Cpu
         /// <returns>The number of CPU cycles to execute this instruction.</returns>
         private int Ret(CpuFlag flag, bool setTo = false, bool enableInterrupts = false)
         {
+            if (enableInterrupts)
+            {
+                InterruptsEnabled = true;
+            }
+
             if (flag == CpuFlag.None || CheckFlag(flag) == setTo)
             {
                 PC = PopStack();
 
                 return flag == CpuFlag.None ? 4 : 5;
-            }
-
-            if (enableInterrupts)
-            {
-                InterruptsEnabled = true;
             }
 
             return 2;
