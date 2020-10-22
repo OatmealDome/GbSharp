@@ -69,6 +69,7 @@ namespace GbSharp.Cpu
                             MathUtil.ClearBit(ref RaisedInterrupts, i);
 
                             Halted = false;
+                            InterruptsEnabled = false;
                         }
                     }
                 }
