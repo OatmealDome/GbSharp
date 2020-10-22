@@ -1,3 +1,4 @@
+using GbSharp.Memory.Ram;
 using GbSharp.Memory.Rom;
 using System;
 using System.Collections.Generic;
