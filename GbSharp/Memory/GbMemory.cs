@@ -1,3 +1,4 @@
+using GbSharp.Memory.Rom;
 using System;
 using System.Collections.Generic;
 
@@ -20,10 +21,13 @@ namespace GbSharp.Memory
         // 0xFFFF          : IE Register
 
         private readonly Dictionary<Tuple<ushort, int>, MemoryRegion> MemoryRegions;
+        private BootRomRegion BootRomRegion;
+        private bool BootRomAccessible;
 
         public GbMemory()
         {
             MemoryRegions = new Dictionary<Tuple<ushort, int>, MemoryRegion>();
+            BootRomAccessible = false;
 
             WorkRamRegion workRam = new WorkRamRegion();
             RegisterRegion(0xC000, 0x2000, workRam);
@@ -31,6 +35,8 @@ namespace GbSharp.Memory
 
             HighSpeedRamRegion highSpeedRam = new HighSpeedRamRegion();
             RegisterRegion(0xFF80, 0x7F, highSpeedRam);
+
+            RegisterMmio(0xFF50, () => (byte)(BootRomAccessible ? 0 : 1), x => BootRomAccessible = false);
         }
 
         public void RegisterRegion(ushort address, int size, MemoryRegion region)
@@ -41,6 +47,12 @@ namespace GbSharp.Memory
         public void RegisterMmio(ushort address, Func<byte> readFunc, Action<byte> writeFunc)
         {
             MemoryRegions.Add(new Tuple<ushort, int>(address, 1), new MmioRegion(readFunc, writeFunc));
+        }
+
+        public void RegisterBootRom(byte[] bootRom)
+        {
+            BootRomRegion = new BootRomRegion(bootRom);
+            BootRomAccessible = true;
         }
 
         private Tuple<ushort, MemoryRegion> GetRegion(ushort address)
@@ -60,6 +72,14 @@ namespace GbSharp.Memory
 
         public byte Read(ushort address)
         {
+            if (BootRomAccessible)
+            {
+                if (MathUtil.InRange(address, 0x0, BootRomRegion.BOOT_ROM_SIZE))
+                {
+                    return BootRomRegion.Read(address);
+                }
+            }
+
             Tuple<ushort, MemoryRegion> regionPair = GetRegion(address);
 
             if (regionPair != null)
