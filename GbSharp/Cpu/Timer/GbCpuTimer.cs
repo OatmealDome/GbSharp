@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 
 namespace GbSharp.Cpu.Timer
 {
@@ -54,6 +54,11 @@ namespace GbSharp.Cpu.Timer
         public void Tick(int cycles)
         {
             Divider++;
+
+            if (!Enabled)
+            {
+                return;
+            }
 
             if (OverflowOccurred)
             {
