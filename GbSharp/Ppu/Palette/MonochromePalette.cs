@@ -1,4 +1,6 @@
-﻿namespace GbSharp.Ppu.Palette
+﻿using System;
+
+namespace GbSharp.Ppu.Palette
 {
     class MonochromePalette
     {
@@ -53,6 +55,24 @@
         public byte ToRegister()
         {
             return (byte)((int)ColourThree << 6 | (int)ColourTwo << 4 | (int)ColourOne << 2 | (int)ColourZero);
+        }
+
+        public MonochromeColour GetColourFromIdx(int idx)
+        {
+            switch (idx)
+            {
+                case 0:
+                    return ColourZero;
+                case 1:
+                    return ColourOne;
+                case 2:
+                    return ColourTwo;
+                case 3:
+                    return ColourThree;
+                default:
+                    throw new Exception($"{idx} is not a valid MonochromeColour");
+            }
+
         }
 
     }
