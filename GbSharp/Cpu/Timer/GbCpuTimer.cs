@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 
 namespace GbSharp.Cpu.Timer
 {
@@ -19,7 +19,11 @@ namespace GbSharp.Cpu.Timer
 
         public GbCpuTimer(GbCpu cpu, GbMemory memory)
         {
-            memory.RegisterMmio(0xFF04, () => Divider, (x) => Divider = 0);
+            memory.RegisterMmio(0xFF04, () => Divider, (x) =>
+            {
+                Divider = 0;
+                Counter = 0;
+            });
             memory.RegisterMmio(0xFF05, () => Counter, (x) => Counter = x);
             memory.RegisterMmio(0xFF06, () => Modulo, (x) => Modulo = x);
             memory.RegisterMmio(0xFF07, GetControl, SetControl);
