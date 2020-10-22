@@ -84,11 +84,7 @@ namespace GbSharp.Cpu
                 }
             }
 
-            if (InterruptsWillBeEnabled)
-            {
-                InterruptsEnabled = true;
-                InterruptsWillBeEnabled = false;
-            }
+            bool enableInterruptsAfter = InterruptsWillBeEnabled;
 
             if (Halted)
             {
@@ -105,6 +101,12 @@ namespace GbSharp.Cpu
             }
 
             Timer.Tick(cycles);
+
+            if (enableInterruptsAfter)
+            {
+                InterruptsEnabled = true;
+                InterruptsWillBeEnabled = false;
+            }
 
             return cycles;
         }
