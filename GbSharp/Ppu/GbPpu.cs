@@ -281,6 +281,8 @@ namespace GbSharp.Ppu
 
         private void ChangePpuMode(PpuMode targetMode)
         {
+            CurrentMode = targetMode;
+
             switch (targetMode)
             {
                 case PpuMode.OamScan:
