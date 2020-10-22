@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
 namespace GbSharp.Cpu.Timer
 {
@@ -11,7 +11,8 @@ namespace GbSharp.Cpu.Timer
         private byte Counter;
         private byte Modulo;
 
-        private int CycleCount;
+        private int DividerCycleCount;
+        private int TimerCycleCount;
         private bool OverflowOccurred;
 
         private readonly GbCpu Cpu;
@@ -23,7 +24,8 @@ namespace GbSharp.Cpu.Timer
             memory.RegisterMmio(0xFF06, () => Modulo, (x) => Modulo = x);
             memory.RegisterMmio(0xFF07, GetControl, SetControl);
 
-            CycleCount = 0;
+            DividerCycleCount = 0;
+            TimerCycleCount = 0;
             OverflowOccurred = true;
 
             Cpu = cpu;
@@ -53,7 +55,14 @@ namespace GbSharp.Cpu.Timer
         /// <param name="cycles">The number of M-Cycles that has passed.</param>
         public void Tick(int cycles)
         {
-            Divider++;
+            DividerCycleCount += cycles;
+
+            if (DividerCycleCount >= 64)
+            {
+                DividerCycleCount -= 64;
+
+                Divider++;
+            }
 
             if (!Enabled)
             {
@@ -69,7 +78,7 @@ namespace GbSharp.Cpu.Timer
                 OverflowOccurred = false;
             }
 
-            CycleCount += cycles;
+            TimerCycleCount += cycles;
 
             int cyclesToNextTick = 0;
             switch (Speed)
@@ -88,11 +97,11 @@ namespace GbSharp.Cpu.Timer
                     break;
             }
 
-            if (CycleCount >= cyclesToNextTick)
+            if (TimerCycleCount >= cyclesToNextTick)
             {
                 Counter++;
 
-                CycleCount -= cyclesToNextTick;
+                TimerCycleCount -= cyclesToNextTick;
 
                 if (Counter == 0)
                 {
