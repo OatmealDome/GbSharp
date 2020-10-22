@@ -100,6 +100,21 @@ namespace GbSharp.Cpu
             return cycles;
         }
 
+        /// <summary>
+        /// If no boot ROM is provided, the CPU's state should be set up to be exactly
+        /// how it is after the boot ROM is executed.
+        /// </summary>
+        public void SetDefaultStateAfterBootRom()
+        {
+            PC = 0x100;
+            SP = 0xFFFE;
+            A = 0x01;
+            F = 0xB0;
+            BC.Value = 0x0013;
+            DE.Value = 0x00D8;
+            HL.Value = 0x014D;
+        }
+
         private byte AdvancePC()
         {
             byte val = MemoryMap.Read(PC);

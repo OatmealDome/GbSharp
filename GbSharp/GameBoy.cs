@@ -18,8 +18,17 @@ namespace GbSharp
             Ppu = new GbPpu(Cpu, MemoryMap);
         }
 
-        public void LoadRom(byte[] rom)
+        public void LoadRom(byte[] rom, byte[] bootRom = null)
         {
+            if (bootRom != null)
+            {
+                MemoryMap.RegisterBootRom(bootRom);
+            }
+            else
+        {
+                Cpu.SetDefaultStateAfterBootRom();
+            }
+
             SimpleRomRegion romRegion = new SimpleRomRegion(rom);
             MemoryMap.RegisterRegion(0x0, 0x8000, romRegion);
         }
