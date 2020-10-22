@@ -1,4 +1,4 @@
-﻿using GbSharp.Cpu;
+using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Memory.Rom;
 using GbSharp.Ppu;
@@ -24,5 +24,10 @@ namespace GbSharp
             MemoryMap.RegisterRegion(0x0, 0x8000, romRegion);
         }
 
+        public byte[] GetPixelOutput()
+        {
+            return Ppu.GetPixelOutput();
+        }
+        
     }
 }

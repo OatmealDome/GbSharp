@@ -1,4 +1,4 @@
-using GbSharp.Cpu;
+﻿using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
@@ -250,7 +250,7 @@ namespace GbSharp.Ppu
                         else
                         {
                             ChangePpuMode(PpuMode.OamScan);
-                    }
+                        }
                     }
 
                     break;
@@ -297,6 +297,8 @@ namespace GbSharp.Ppu
                     OamRegion.Unlock();
                     VideoRamRegion.Unlock();
 
+                    DrawScanline();
+
                     break;
                 case PpuMode.VBlank:
                     Cpu.RaiseInterrupt(0);
@@ -305,9 +307,84 @@ namespace GbSharp.Ppu
             }
         }
 
+        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY)
+        {
+            ushort dataOfs = (ushort)(UseAlternateTileData ? 0x0 : 0x880);
+
+            ushort dataStartOfs = (ushort)(dataOfs + (tileIdx * 16) + (tilePixelY * 2));
+
+            byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs);
+            byte tileHigh = VideoRamRegion.ReadDirect((ushort)(dataStartOfs + 1));
+
+            int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
+
+            int outputOfs = ((screenY * 160) + screenX) * 4;
+
+            switch (BgPalette.GetColourFromIdx(colourIdx))
+            {
+                case MonochromeColour.Black:
+                    RawOutput[outputOfs] = 0;
+                    RawOutput[outputOfs + 1] = 0;
+                    RawOutput[outputOfs + 2] = 0;
+
+                    break;
+                case MonochromeColour.LightGrey:
+                    RawOutput[outputOfs] = 169;
+                    RawOutput[outputOfs + 1] = 169;
+                    RawOutput[outputOfs + 2] = 169;
+
+                    break;
+                case MonochromeColour.DarkGrey:
+                    RawOutput[outputOfs] = 84;
+                    RawOutput[outputOfs + 1] = 84;
+                    RawOutput[outputOfs + 2] = 84;
+
+                    break;
+                case MonochromeColour.White:
+                    RawOutput[outputOfs] = 255;
+                    RawOutput[outputOfs + 1] = 255;
+                    RawOutput[outputOfs + 2] = 255;
+
+                    break;
+            }
+
+            // Alpha should always be 255 (1.0f)
+            RawOutput[outputOfs + 3] = 255;
+        }
+
         private void DrawScanline()
         {
-            // TODO
+            if (PrioritizeBgAndWindow)
+            {
+                ushort bgTileMapOfs = (ushort)(UseAlternateBgTileMap ? 0x1c00 : 0x1800);
+
+                byte bgPixelY = (byte)(CurrentScanline + BgScrollY);
+                int bgTileY = bgPixelY / 8;
+                int bgTilePixelY = bgPixelY % 8;
+
+                for (byte x = 0; x < 160; x++)
+                {
+                    byte bgPixelX = (byte)(x + BgScrollX);
+                    int bgTileX = bgPixelX / 8;
+                    int bgTilePixelX = bgPixelX % 8;
+
+                    byte tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
+
+                    DrawTilePixel(x, CurrentScanline, tileIdx, bgTilePixelX, bgTilePixelY);
+                }
+
+                if (EnableWindow)
+                {
+                    ushort windowTileMapOfs = (ushort)(UseAlternateWindowTileMap ? 0x1c00 : 0x1800);
+
+                    // TODO: Window rendering
+                }
+            }
+        }
+
+        public byte[] GetPixelOutput()
+        {
+            return RawOutput;
         }
 
     }
