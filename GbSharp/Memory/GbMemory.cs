@@ -21,13 +21,13 @@ namespace GbSharp.Memory
         // 0xFF80 to 0xFFFE: High Speed RAM
         // 0xFFFF          : IE Register
 
-        private readonly Dictionary<Tuple<ushort, int>, MemoryRegion> MemoryRegions;
+        private readonly Dictionary<ushort, Tuple<ushort, MemoryRegion>> MemoryMap;
         private BootRomRegion BootRomRegion;
         private bool BootRomAccessible;
 
         public GbMemory()
         {
-            MemoryRegions = new Dictionary<Tuple<ushort, int>, MemoryRegion>();
+            MemoryMap = new Dictionary<ushort, Tuple<ushort, MemoryRegion>>();
             BootRomAccessible = false;
 
             WorkRamRegion workRam = new WorkRamRegion();
@@ -42,12 +42,15 @@ namespace GbSharp.Memory
 
         public void RegisterRegion(ushort address, int size, MemoryRegion region)
         {
-            MemoryRegions.Add(new Tuple<ushort, int>(address, size), region);
+            for (int i = 0; i < size; i++)
+            {
+                MemoryMap[(ushort)(address + i)] = new Tuple<ushort, MemoryRegion>(address, region);
+        }
         }
 
         public void RegisterMmio(ushort address, Func<byte> readFunc, Action<byte> writeFunc)
         {
-            MemoryRegions.Add(new Tuple<ushort, int>(address, 1), new MmioRegion(readFunc, writeFunc));
+            MemoryMap[address] = new Tuple<ushort, MemoryRegion>(address, new MmioRegion(readFunc, writeFunc));
         }
 
         public void RegisterBootRom(byte[] bootRom)
@@ -58,14 +61,11 @@ namespace GbSharp.Memory
 
         private Tuple<ushort, MemoryRegion> GetRegion(ushort address)
         {
-            foreach (Tuple<ushort, int> regionSpan in MemoryRegions.Keys)
-            {
-                if (MathUtil.InRange(address, regionSpan.Item1, regionSpan.Item2))
+            if (MemoryMap.TryGetValue(address, out Tuple<ushort, MemoryRegion> tuple))
                 {
-                    ushort offset = (ushort)(address - regionSpan.Item1);
+                ushort offset = (ushort)(address - tuple.Item1);
 
-                    return new Tuple<ushort, MemoryRegion>(offset, MemoryRegions[regionSpan]);
-                }
+                return new Tuple<ushort, MemoryRegion>(offset, tuple.Item2);
             }
 
             return null;
