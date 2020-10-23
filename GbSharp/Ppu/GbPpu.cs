@@ -261,8 +261,7 @@ namespace GbSharp.Ppu
 
                     if (CurrentScanlineCyclePosition == 114)
                     {
-                        CurrentScanline++;
-                        CurrentScanlineCyclePosition = 0;
+                        ChangeScanline(false);
 
                         if (CurrentScanline == 143)
                         {
@@ -278,27 +277,20 @@ namespace GbSharp.Ppu
                 case PpuMode.VBlank:
                     if (CurrentScanlineCyclePosition == 114)
                     {
-                        CurrentScanlineCyclePosition = 0;
-
                         if (CurrentScanline == 153)
                         {
+                            ChangeScanline(true);
                             ChangePpuMode(PpuMode.OamScan);
-                            CurrentScanline = 0;
                         }
                         else
                         {
-                            CurrentScanline++;
+                            ChangeScanline(false);
                         }
                     }
 
                     break;
             }
-
-            if (CurrentScanline == ScanlineCompare)
-            {
-                Cpu.RaiseInterrupt(1);
             }
-        }
 
         private void ChangePpuMode(PpuMode targetMode)
         {
@@ -308,6 +300,11 @@ namespace GbSharp.Ppu
             {
                 case PpuMode.OamScan:
                     OamRegion.Lock();
+
+                    if (OamScanInterruptEnabled)
+                    {
+                        Cpu.RaiseInterrupt(1);
+                    }
 
                     break;
                 case PpuMode.PictureGeneration:
@@ -320,12 +317,33 @@ namespace GbSharp.Ppu
 
                     DrawScanline();
 
+                    if (HBlankInterruptEnabled)
+                    {
+                        Cpu.RaiseInterrupt(1);
+                    }
+
                     break;
                 case PpuMode.VBlank:
+                    // TODO: does the PPU even listen to this flag? games just write zero to the bit
+                    //if (VBlankInterruptEnabled)
+                    //{
                     Cpu.RaiseInterrupt(0);
+                    //}
 
                     break;
             }
+        }
+
+        private void ChangeScanline(bool toTop)
+        {
+            if (CoincidenceInterruptEnabled && CurrentScanline == ScanlineCompare)
+            {
+                Cpu.RaiseInterrupt(1);
+            }
+
+            CurrentScanline = (byte)(toTop ? 0 : CurrentScanline + 1);
+            CurrentScanlineCyclePosition = 0;
+            SkipDrawingObjectsForScanline = false;
         }
 
         private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY)
