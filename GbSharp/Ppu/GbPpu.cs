@@ -45,10 +45,9 @@ namespace GbSharp.Ppu
         private byte WindowY;
         private byte WindowX;
 
-        // LCD Monochrome Palettes
-        private MonochromePalette BgPalette;
-        private MonochromePalette ObjectZeroPalette;
-        private MonochromePalette ObjectOnePalette;
+        // LCD Palettes
+        private List<ColourPalette> BgPalettes;
+        private List<ColourPalette> ObjectPalettes;
 
         // LCD OAM DMA
         private byte OamDmaStart;
@@ -79,12 +78,19 @@ namespace GbSharp.Ppu
             WindowX = 0;
             WindowY = 0;
 
-            BgPalette = new MonochromePalette();
-            ObjectZeroPalette = new MonochromePalette();
-            ObjectOnePalette = new MonochromePalette();
+            BgPalettes = new List<ColourPalette>();
+            ObjectPalettes = new List<ColourPalette>();
 
             Cpu = cpu;
             MemoryMap = memory;
+
+            // CGB can have up to 8 BG and object palettes.
+            // On DMG, we only need BG0, OBJ0, and OBJ1, so the rest go unused.
+            for (int i = 0; i < 8; i++)
+            {
+                BgPalettes.Add(new ColourPalette());
+                ObjectPalettes.Add(new ColourPalette());
+            }
 
             MemoryMap.RegisterRegion(0x8000, VideoRamRegion.VIDEO_RAM_SIZE, VideoRamRegion);
             MemoryMap.RegisterRegion(0xFE00, OamRegion.OAM_SIZE, OamRegion);
@@ -230,9 +236,10 @@ namespace GbSharp.Ppu
             MemoryMap.RegisterMmio(0xFF4A, () => WindowY, (x) => WindowY = x);
             MemoryMap.RegisterMmio(0xFF4B, () => WindowX, (x) => WindowX = x);
 
-            MemoryMap.RegisterMmio(0xFF47, () => BgPalette.ToRegister(), x => BgPalette.SetFromRegister(x));
-            MemoryMap.RegisterMmio(0xFF48, () => ObjectZeroPalette.ToRegister(), x => ObjectZeroPalette.SetFromRegister(x));
-            MemoryMap.RegisterMmio(0xFF49, () => ObjectOnePalette.ToRegister(), x => ObjectOnePalette.SetFromRegister(x));
+            // DMG Palette registers
+            MemoryMap.RegisterMmio(0xFF47, () => BgPalettes[0].GetDmgRegister(), x => BgPalettes[0].SetFromDmgRegister(x));
+            MemoryMap.RegisterMmio(0xFF48, () => ObjectPalettes[0].GetDmgRegister(), x => ObjectPalettes[0].SetFromDmgRegister(x));
+            MemoryMap.RegisterMmio(0xFF49, () => ObjectPalettes[1].GetDmgRegister(), x => ObjectPalettes[1].SetFromDmgRegister(x));
 
             // TODO: Initiating an OAM DMA transfer will lock out all memory except HRAM
             MemoryMap.RegisterMmio(0xFF46, () => OamDmaStart, x =>
@@ -400,55 +407,25 @@ namespace GbSharp.Ppu
 
                 if (isObject && colourIdx == 0)
                 {
-                        continue;
+                    continue;
                 }
 
                 int outputOfs = ((screenY * 160) + (screenX + tilePixelX)) * 4;
 
-                MonochromePalette palette;
+                ColourPalette palette;
                 if (isObject)
                 {
-                    if (objectPalette == 0)
-                    {
-                        palette = ObjectZeroPalette;
-                    }
-                    else
-                    {
-                        palette = ObjectOnePalette;
-                    }
+                    palette = ObjectPalettes[objectPalette];
                 }
                 else
                 {
-                    palette = BgPalette;
+                    palette = BgPalettes[0];
                 }
 
-                switch (palette.GetColourFromIdx(colourIdx))
-                {
-                    case MonochromeColour.Black:
-                        RawOutput[outputOfs] = 0;
-                        RawOutput[outputOfs + 1] = 0;
-                        RawOutput[outputOfs + 2] = 0;
-
-                        break;
-                    case MonochromeColour.LightGrey:
-                        RawOutput[outputOfs] = 169;
-                        RawOutput[outputOfs + 1] = 169;
-                        RawOutput[outputOfs + 2] = 169;
-
-                        break;
-                    case MonochromeColour.DarkGrey:
-                        RawOutput[outputOfs] = 84;
-                        RawOutput[outputOfs + 1] = 84;
-                        RawOutput[outputOfs + 2] = 84;
-
-                        break;
-                    case MonochromeColour.White:
-                        RawOutput[outputOfs] = 255;
-                        RawOutput[outputOfs + 1] = 255;
-                        RawOutput[outputOfs + 2] = 255;
-
-                        break;
-                }
+                LcdColour colour = palette.GetColour(colourIdx);
+                RawOutput[outputOfs] = colour.R;
+                RawOutput[outputOfs + 1] = colour.G;
+                RawOutput[outputOfs + 2] = colour.B;
 
                 // Alpha should always be 255 (1.0f)
                 RawOutput[outputOfs + 3] = 255;
