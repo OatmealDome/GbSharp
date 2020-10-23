@@ -92,8 +92,8 @@ namespace GbSharp.Ppu
                 ObjectPalettes.Add(new ColourPalette());
             }
 
-            MemoryMap.RegisterRegion(0x8000, VideoRamRegion.VIDEO_RAM_SIZE, VideoRamRegion);
-            MemoryMap.RegisterRegion(0xFE00, OamRegion.OAM_SIZE, OamRegion);
+            MemoryMap.RegisterRegion(VideoRamRegion);
+            MemoryMap.RegisterRegion(OamRegion);
 
             MemoryMap.RegisterMmio(0xFF40, () =>
             {

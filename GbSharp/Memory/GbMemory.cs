@@ -30,21 +30,22 @@ namespace GbSharp.Memory
             MemoryMap = new Dictionary<int, MemoryRegion>();
             BootRomAccessible = false;
 
-            WorkRamRegion workRam = new WorkRamRegion();
-            RegisterRegion(0xC000, 0x2000, workRam);
-            RegisterRegion(0xE000, 0x1E00, workRam); // Echo
-
-            HighSpeedRamRegion highSpeedRam = new HighSpeedRamRegion();
-            RegisterRegion(0xFF80, 0x7F, highSpeedRam);
+            RegisterRegion(new WorkRamRegion());
+            RegisterRegion(new HighSpeedRamRegion());
 
             RegisterMmio(0xFF50, () => (byte)(BootRomAccessible ? 0 : 1), x => BootRomAccessible = false);
         }
 
-        public void RegisterRegion(int address, int size, MemoryRegion region)
+        public void RegisterRegion(MemoryRegion region)
         {
-            for (int i = 0; i < size; i++)
+            IEnumerable<Tuple<int, int>> ranges = region.GetHandledRanges();
+
+            foreach (Tuple<int, int> range in ranges)
             {
-                MemoryMap[address + i] = region;
+                for (int i = 0; i < range.Item2; i++)
+                {
+                    MemoryMap[range.Item1 + i] = region;
+                }
             }
         }
 

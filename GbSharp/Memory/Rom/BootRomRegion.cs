@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace GbSharp.Memory.Rom
 {
@@ -16,6 +17,12 @@ namespace GbSharp.Memory.Rom
             }
 
             Rom = rom;
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            // Return nothing, we're a special case in GbMemory
+            return null;
         }
 
         public override byte Read(int offset)

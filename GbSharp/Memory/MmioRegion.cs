@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace GbSharp.Memory
 {
@@ -11,6 +12,12 @@ namespace GbSharp.Memory
         {
             ReadFunc = readFunc;
             WriteFunc = writeFunc;
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            // Return nothing, RegisterMmio handles this for us
+            return null;
         }
 
         public override byte Read(int offset)

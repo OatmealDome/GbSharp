@@ -1,11 +1,13 @@
 ﻿using GbSharp.Memory;
+using System;
 using System.Collections.Generic;
 
 namespace GbSharp.Ppu.Memory
 {
     class VideoRamRegion : MemoryRegion
     {
-        public static readonly int VIDEO_RAM_SIZE = 0x2000;
+        private static readonly int VIDEO_RAM_START = 0x8000;
+        private static readonly int VIDEO_RAM_SIZE = 0x2000;
 
         private List<byte[]> Banks;
         private int CurrentSwitchableBank;
@@ -29,6 +31,14 @@ namespace GbSharp.Ppu.Memory
         public void Unlock()
         {
             Locked = false;
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            return new List<Tuple<int, int>>()
+            {
+                new Tuple<int, int>(VIDEO_RAM_START, VIDEO_RAM_SIZE)
+            };
         }
 
         public override byte Read(int address)

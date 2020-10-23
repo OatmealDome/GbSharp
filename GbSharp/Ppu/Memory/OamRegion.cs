@@ -1,10 +1,13 @@
 ﻿using GbSharp.Memory;
+using System;
+using System.Collections.Generic;
 
 namespace GbSharp.Ppu.Memory
 {
     class OamRegion : MemoryRegion
     {
-        public static readonly int OAM_SIZE = 0x100;
+        private static readonly int OAM_START = 0xFE00;
+        private static readonly int OAM_SIZE = 0x100;
 
         private byte[] Oam;
         private bool Locked;
@@ -22,6 +25,14 @@ namespace GbSharp.Ppu.Memory
         public void Unlock()
         {
             Locked = false;
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            return new List<Tuple<int, int>>()
+            {
+                new Tuple<int, int>(OAM_START, OAM_SIZE)
+            };
         }
 
         public override byte Read(int address)

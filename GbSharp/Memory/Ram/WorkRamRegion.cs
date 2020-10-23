@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace GbSharp.Memory
@@ -9,10 +10,11 @@ namespace GbSharp.Memory
         // 0xE000 to 0xEFFF: Echo Work RAM (bank 0)
         // 0xF000 to 0xFDFF: Echo Work RAM (switchable bank)
 
-        public static readonly int WORK_RAM_START = 0xC000;
-        public static readonly int WORK_RAM_BANK_START = 0xD000;
-        public static readonly int ECHO_RAM_START = 0xE000;
-        public static readonly int BANK_SIZE = 0x1000;
+        private static readonly int WORK_RAM_START = 0xC000;
+        private static readonly int WORK_RAM_BANK_START = 0xD000;
+        private static readonly int ECHO_RAM_START = 0xE000;
+        private static readonly int BANK_SIZE = 0x1000;
+        private static readonly int ECHO_RAM_SIZE = 0x1E00;
 
         private static readonly int DMG_BANK_COUNT = 2;
         private static readonly int CGB_BANK_COUNT = 8;
@@ -30,6 +32,15 @@ namespace GbSharp.Memory
             {
                 Banks.Add(new byte[BANK_SIZE]);
             }
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            return new List<Tuple<int, int>>()
+            {
+                new Tuple<int, int>(WORK_RAM_START, BANK_SIZE * 2),
+                new Tuple<int, int>(ECHO_RAM_START, ECHO_RAM_SIZE)
+            };
         }
 
         private bool OffsetInSwitchableBank(int address)

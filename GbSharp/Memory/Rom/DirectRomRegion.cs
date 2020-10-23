@@ -1,12 +1,26 @@
-﻿namespace GbSharp.Memory.Rom
+﻿using System;
+using System.Collections.Generic;
+
+namespace GbSharp.Memory.Rom
 {
     class DirectRomRegion : MemoryRegion
     {
+        private readonly int ROM_START = 0x0;
+        private readonly int ROM_SIZE = 0x8000;
+
         private readonly byte[] Rom;
 
         public DirectRomRegion(byte[] rom)
         {
             Rom = rom;
+        }
+
+        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        {
+            return new List<Tuple<int, int>>()
+            {
+                new Tuple<int, int>(ROM_START, ROM_SIZE)
+            };
         }
 
         public override byte Read(int offset)
