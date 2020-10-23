@@ -29,7 +29,7 @@ namespace GbSharp
                 Cpu.SetDefaultStateAfterBootRom();
             }
 
-            SimpleRomRegion romRegion = new SimpleRomRegion(rom);
+            DirectRomRegion romRegion = new DirectRomRegion(rom);
             MemoryMap.RegisterRegion(0x0, 0x8000, romRegion);
         }
 

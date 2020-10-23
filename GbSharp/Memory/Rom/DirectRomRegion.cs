@@ -1,10 +1,10 @@
 ﻿namespace GbSharp.Memory.Rom
 {
-    class SimpleRomRegion : MemoryRegion
+    class DirectRomRegion : MemoryRegion
     {
         private readonly byte[] Rom;
 
-        public SimpleRomRegion(byte[] rom)
+        public DirectRomRegion(byte[] rom)
         {
             Rom = rom;
         }
