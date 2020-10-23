@@ -2,7 +2,7 @@ namespace GbSharp
 {
     internal class MathUtil
     {
-        public static bool InRange(ushort value, ushort start, int size)
+        public static bool InRange(int value, int start, int size)
         {
             return value >= start && value < start + size;
         }
