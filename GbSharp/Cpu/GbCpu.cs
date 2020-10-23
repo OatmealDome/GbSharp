@@ -289,6 +289,11 @@ namespace GbSharp.Cpu
             MathUtil.SetBit(ref RaisedInterrupts, bit);
         }
 
+        public void ClearInterrupt(int bit)
+        {
+            MathUtil.ClearBit(ref RaisedInterrupts, bit);
+        }
+
         /// <summary>
         /// Advances the CPU by one instruction.
         /// </summary>
