@@ -271,8 +271,8 @@ namespace GbSharp.Ppu
                 {
                     for (int i = 0; i < 0x100; i++)
                     {
-                        byte value = MemoryMap.Read((ushort)((OamDmaStart * 0x100) + i));
-                        OamRegion.WriteDirect((ushort)i, value);
+                        byte value = MemoryMap.Read((OamDmaStart * 0x100) + i);
+                        OamRegion.WriteDirect(i, value);
                     }
                 }
             }
@@ -387,7 +387,7 @@ namespace GbSharp.Ppu
 
         private void DrawPixelLineFromTile(int screenX, int screenY, int tileIdx, int tilePixelStartX, int tilePixelStartY, int lineLength, bool isObject = false, int objectPalette = 0)
         {
-            ushort dataOfs = 0;
+            int dataOfs = 0;
             if (!isObject && !UseAlternateTileData)
             {
                 // The primary tile data mode has some weird quirks - the tileIdx here
@@ -396,10 +396,10 @@ namespace GbSharp.Ppu
                 tileIdx = (sbyte)tileIdx;
             }
 
-            ushort dataStartOfs = (ushort)(dataOfs + (tileIdx * 16) + (tilePixelStartY * 2));
+            int dataStartOfs = dataOfs + (tileIdx * 16) + (tilePixelStartY * 2);
 
             byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs);
-            byte tileHigh = VideoRamRegion.ReadDirect((ushort)(dataStartOfs + 1));
+            byte tileHigh = VideoRamRegion.ReadDirect(dataStartOfs + 1);
 
             for (int tilePixelX = tilePixelStartX; tilePixelX < lineLength; tilePixelX++)
             {
@@ -436,7 +436,7 @@ namespace GbSharp.Ppu
         {
             if (PrioritizeBgAndWindow)
             {
-                ushort bgTileMapOfs = (ushort)(UseAlternateBgTileMap ? 0x1c00 : 0x1800);
+                int bgTileMapOfs = UseAlternateBgTileMap ? 0x1c00 : 0x1800;
 
                 byte bgPixelY = (byte)(CurrentScanline + BgScrollY);
                 int bgTileY = bgPixelY / 8;
@@ -453,7 +453,7 @@ namespace GbSharp.Ppu
                 while (x != 160)
                 {
                     int lineLength = 8 - bgTilePixelX;
-                    tileIdx = tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
+                    tileIdx = tileIdx = VideoRamRegion.ReadDirect(bgTileMapOfs + (bgTileY * 32) + bgTileX);
 
                     DrawPixelLineFromTile(x, CurrentScanline, tileIdx, bgTilePixelX, bgTilePixelY, lineLength);
 
@@ -469,7 +469,7 @@ namespace GbSharp.Ppu
 
                 if (EnableWindow)
                 {
-                    ushort windowTileMapOfs = (ushort)(UseAlternateWindowTileMap ? 0x1c00 : 0x1800);
+                    int windowTileMapOfs = UseAlternateWindowTileMap ? 0x1c00 : 0x1800;
 
                     // TODO: Window rendering
                 }
@@ -481,7 +481,7 @@ namespace GbSharp.Ppu
 
                 for (int i = 0; i < 40; i++)
                 {
-                    ushort objectAddress = (ushort)(i * 0x4);
+                    int objectAddress = i * 0x4;
 
                     byte objPixelY = OamRegion.ReadDirect(objectAddress);
 
@@ -494,10 +494,10 @@ namespace GbSharp.Ppu
                     {
                         objectsToRender.Add(new GbObject()
                         {
-                            XCoord = OamRegion.ReadDirect((ushort)(objectAddress + 1)),
+                            XCoord = OamRegion.ReadDirect(objectAddress + 1),
                             YCoord = objPixelY,
-                            TileIdx = OamRegion.ReadDirect((ushort)(objectAddress + 2)),
-                            Attributes = OamRegion.ReadDirect((ushort)(objectAddress + 3))
+                            TileIdx = OamRegion.ReadDirect(objectAddress + 2),
+                            Attributes = OamRegion.ReadDirect(objectAddress + 3)
                         });
                     }
                 }
