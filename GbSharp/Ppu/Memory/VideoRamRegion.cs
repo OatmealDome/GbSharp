@@ -1,4 +1,5 @@
 ﻿using GbSharp.Memory;
+using System.Collections.Generic;
 
 namespace GbSharp.Ppu.Memory
 {
@@ -6,15 +7,17 @@ namespace GbSharp.Ppu.Memory
     {
         public static readonly int VIDEO_RAM_SIZE = 0x2000;
 
-        private byte[] BankOne;
-        private byte[] BankTwo; // CGB
+        private List<byte[]> Banks;
         private int CurrentSwitchableBank;
         private bool Locked;
 
         public VideoRamRegion()
         {
-            BankOne = new byte[VIDEO_RAM_SIZE];
-            BankTwo = new byte[VIDEO_RAM_SIZE];
+            Banks = new List<byte[]>()
+            {
+                new byte[VIDEO_RAM_SIZE],
+                new byte[VIDEO_RAM_SIZE] // CGB
+            };
             CurrentSwitchableBank = 0;
         }
 
@@ -48,26 +51,14 @@ namespace GbSharp.Ppu.Memory
             }
         }
 
-        private byte[] GetCurrentBank()
-        {
-            if (CurrentSwitchableBank == 0)
-            {
-                return BankOne;
-            }
-            else
-            {
-                return BankTwo;
-            }
-        }
-
         public byte ReadDirect(ushort offset)
         {
-            return GetCurrentBank()[offset];
+            return Banks[CurrentSwitchableBank][offset];
         }
 
         public void WriteDirect(ushort offset, byte val)
         {
-            GetCurrentBank()[offset] = val;
+            Banks[CurrentSwitchableBank][offset] = val;
         }
 
     }
