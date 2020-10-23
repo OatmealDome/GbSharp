@@ -1,4 +1,4 @@
-﻿using GbSharp.Cpu;
+using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
@@ -137,6 +137,24 @@ namespace GbSharp.Ppu
                 UseDoubleHeightObjectSize = MathUtil.IsBitSet(x, 2);
                 EnableObjects = MathUtil.IsBitSet(x, 1);
                 PrioritizeBgAndWindow = MathUtil.IsBitSet(x, 0);
+
+                if (!EnableLcd)
+                {
+                    CurrentScanline = 0;
+                    CurrentScanlineCyclePosition = 0;
+
+                    ChangePpuMode(PpuMode.OamScan);
+
+                    // Clear the screen
+                    for (int i = 0; i < RawOutput.Length; i++)
+                    {
+                        RawOutput[i] = 255;
+                    }
+
+                    // Clear interrupts
+                    Cpu.ClearInterrupt(0);
+                    Cpu.ClearInterrupt(1);
+                }
             });
 
             MemoryMap.RegisterMmio(0xFF41, () =>
