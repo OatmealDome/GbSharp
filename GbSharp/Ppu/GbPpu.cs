@@ -186,6 +186,8 @@ namespace GbSharp.Ppu
                     MathUtil.SetBit(ref b, 2);
                 }
 
+                if (EnableLcd)
+                {
                 int modeInt = (int)CurrentMode;
 
                 if (MathUtil.IsBitSet((byte)modeInt, 1))
@@ -196,6 +198,7 @@ namespace GbSharp.Ppu
                 if (MathUtil.IsBitSet((byte)modeInt, 0))
                 {
                     MathUtil.SetBit(ref b, 0);
+                }
                 }
 
                 return b;
