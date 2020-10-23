@@ -13,12 +13,12 @@ namespace GbSharp.Memory
             WriteFunc = writeFunc;
         }
 
-        public override byte Read(ushort offset)
+        public override byte Read(int offset)
         {
             return ReadFunc();
         }
 
-        public override void Write(ushort offset, byte val)
+        public override void Write(int offset, byte val)
         {
             WriteFunc(val);
         }

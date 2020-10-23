@@ -32,12 +32,12 @@ namespace GbSharp.Memory
             }
         }
 
-        private bool OffsetInSwitchableBank(ushort address)
+        private bool OffsetInSwitchableBank(int address)
         {
             return MathUtil.InRange(address, WORK_RAM_BANK_START, BANK_SIZE);
         }
 
-        public override byte Read(ushort address)
+        public override byte Read(int address)
         {
             int bankIdx = 0;
 
@@ -51,7 +51,7 @@ namespace GbSharp.Memory
             return Banks[bankIdx][address];
         }
 
-        public override void Write(ushort address, byte val)
+        public override void Write(int address, byte val)
         {
             int bankIdx = 0;
 

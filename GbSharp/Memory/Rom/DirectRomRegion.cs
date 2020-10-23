@@ -9,12 +9,12 @@
             Rom = rom;
         }
 
-        public override byte Read(ushort offset)
+        public override byte Read(int offset)
         {
             return Rom[offset];
         }
 
-        public override void Write(ushort offset, byte val)
+        public override void Write(int offset, byte val)
         {
             // for simple ROMs (no mapper), writing isn't allowed
             // something probably went very wrong

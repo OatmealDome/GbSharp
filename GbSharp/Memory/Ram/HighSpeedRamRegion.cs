@@ -12,12 +12,12 @@
             HighSpeedRam = new byte[HRAM_SIZE];
         }
 
-        public override byte Read(ushort address)
+        public override byte Read(int address)
         {
             return HighSpeedRam[address - HRAM_START];
         }
 
-        public override void Write(ushort address, byte val)
+        public override void Write(int address, byte val)
         {
             HighSpeedRam[address - HRAM_START] = val;
         }

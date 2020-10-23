@@ -18,12 +18,12 @@ namespace GbSharp.Memory.Rom
             Rom = rom;
         }
 
-        public override byte Read(ushort offset)
+        public override byte Read(int offset)
         {
             return Rom[offset];
         }
 
-        public override void Write(ushort offset, byte val)
+        public override void Write(int offset, byte val)
         {
             // Should never happen
         }
