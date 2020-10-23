@@ -2,6 +2,7 @@
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -377,7 +378,7 @@ namespace GbSharp.Ppu
             SkipDrawingObjectsForScanline = false;
         }
 
-        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY, bool isObject = false, int objectPalette = 0)
+        private void DrawPixelLineFromTile(int screenX, int screenY, int tileIdx, int tilePixelStartX, int tilePixelStartY, int lineLength, bool isObject = false, int objectPalette = 0)
         {
             ushort dataOfs = 0;
             if (!isObject && !UseAlternateTileData)
@@ -388,67 +389,70 @@ namespace GbSharp.Ppu
                 tileIdx = (sbyte)tileIdx;
             }
 
-            ushort dataStartOfs = (ushort)(dataOfs + (tileIdx * 16) + (tilePixelY * 2));
+            ushort dataStartOfs = (ushort)(dataOfs + (tileIdx * 16) + (tilePixelStartY * 2));
 
             byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs);
             byte tileHigh = VideoRamRegion.ReadDirect((ushort)(dataStartOfs + 1));
 
-            int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
-
-            if (isObject && colourIdx == 0)
+            for (int tilePixelX = tilePixelStartX; tilePixelX < lineLength; tilePixelX++)
             {
-                return;
-            }
+                int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
 
-            int outputOfs = ((screenY * 160) + screenX) * 4;
-
-            MonochromePalette palette;
-            if (isObject)
-            {
-                if (objectPalette == 0)
+                if (isObject && colourIdx == 0)
                 {
-                    palette = ObjectZeroPalette;
+                        continue;
+                }
+
+                int outputOfs = ((screenY * 160) + (screenX + tilePixelX)) * 4;
+
+                MonochromePalette palette;
+                if (isObject)
+                {
+                    if (objectPalette == 0)
+                    {
+                        palette = ObjectZeroPalette;
+                    }
+                    else
+                    {
+                        palette = ObjectOnePalette;
+                    }
                 }
                 else
                 {
-                    palette = ObjectOnePalette;
+                    palette = BgPalette;
                 }
+
+                switch (palette.GetColourFromIdx(colourIdx))
+                {
+                    case MonochromeColour.Black:
+                        RawOutput[outputOfs] = 0;
+                        RawOutput[outputOfs + 1] = 0;
+                        RawOutput[outputOfs + 2] = 0;
+
+                        break;
+                    case MonochromeColour.LightGrey:
+                        RawOutput[outputOfs] = 169;
+                        RawOutput[outputOfs + 1] = 169;
+                        RawOutput[outputOfs + 2] = 169;
+
+                        break;
+                    case MonochromeColour.DarkGrey:
+                        RawOutput[outputOfs] = 84;
+                        RawOutput[outputOfs + 1] = 84;
+                        RawOutput[outputOfs + 2] = 84;
+
+                        break;
+                    case MonochromeColour.White:
+                        RawOutput[outputOfs] = 255;
+                        RawOutput[outputOfs + 1] = 255;
+                        RawOutput[outputOfs + 2] = 255;
+
+                        break;
+                }
+
+                // Alpha should always be 255 (1.0f)
+                RawOutput[outputOfs + 3] = 255;
             }
-            else
-            {
-                palette = BgPalette;
-            }
-
-            switch (palette.GetColourFromIdx(colourIdx))
-            {
-                case MonochromeColour.Black:
-                    RawOutput[outputOfs] = 0;
-                    RawOutput[outputOfs + 1] = 0;
-                    RawOutput[outputOfs + 2] = 0;
-
-                    break;
-                case MonochromeColour.LightGrey:
-                    RawOutput[outputOfs] = 169;
-                    RawOutput[outputOfs + 1] = 169;
-                    RawOutput[outputOfs + 2] = 169;
-
-                    break;
-                case MonochromeColour.DarkGrey:
-                    RawOutput[outputOfs] = 84;
-                    RawOutput[outputOfs + 1] = 84;
-                    RawOutput[outputOfs + 2] = 84;
-
-                    break;
-                case MonochromeColour.White:
-                    RawOutput[outputOfs] = 255;
-                    RawOutput[outputOfs + 1] = 255;
-                    RawOutput[outputOfs + 2] = 255;
-
-                    break;
-            }
-
-            // Alpha should always be 255 (1.0f)
-            RawOutput[outputOfs + 3] = 255;
         }
 
         private void DrawScanline()
@@ -461,15 +465,29 @@ namespace GbSharp.Ppu
                 int bgTileY = bgPixelY / 8;
                 int bgTilePixelY = bgPixelY % 8;
 
-                for (byte x = 0; x < 160; x++)
+                byte bgPixelX = BgScrollX;
+                int bgTileX = bgPixelX / 8;
+                int bgTilePixelX = bgPixelX % 8;
+
+                int tileIdx;
+
+                int x = 0;
+
+                while (x != 160)
                 {
-                    byte bgPixelX = (byte)(x + BgScrollX);
-                    int bgTileX = bgPixelX / 8;
-                    int bgTilePixelX = bgPixelX % 8;
+                    int lineLength = 8 - bgTilePixelX;
+                    tileIdx = tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
 
-                    byte tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
+                    DrawPixelLineFromTile(x, CurrentScanline, tileIdx, bgTilePixelX, bgTilePixelY, lineLength);
 
-                    DrawTilePixel(x, CurrentScanline, tileIdx, bgTilePixelX, bgTilePixelY);
+                    bgTilePixelX += lineLength;
+                    x += lineLength;
+
+                    if (bgTilePixelX == 8)
+                    {
+                        bgTileX++;
+                        bgTilePixelX = 0;
+                    }
                 }
 
                 if (EnableWindow)
@@ -508,21 +526,35 @@ namespace GbSharp.Ppu
                 }
                 
                 // TODO: CGB orders by first appearance in OAM
+                // TODO: reverse order of Take enumerable - otherwise sprites with higher X will take priority
                 foreach (GbObject obj in objectsToRender.OrderBy(obj => obj.XCoord).Take(10))
                 {
+                    if (obj.XCoord == 0 || obj.XCoord >= 168)
+                    {
+                        continue;
+                    }
+
                     int objTargetPixelY = (CurrentScanline + 16) - obj.YCoord;
                     
-                    for (int x = 0; x < 160; x++)
+                    int startScreenX = Math.Max(0, obj.XCoord - 8);
+                    int startObjPixelX = 0;
+
+                    int lineLength;
+                    if (obj.XCoord < 8) // intersecting with left screen edge
                     {
-                        if (!MathUtil.InRange(x + 8, obj.XCoord, 8))
-                        {
-                            continue;
-                        }
-
-                        int objTargetPixelX = (x + 8) - obj.XCoord;
-
-                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, MathUtil.GetBit(obj.Attributes, 4));
+                        lineLength = obj.XCoord;
+                        startObjPixelX = 8 - obj.XCoord;
                     }
+                    else if (obj.XCoord + 8 > 168) // intersecting with right edge
+                    {
+                        lineLength = 168 - obj.XCoord;
+                    }
+                    else // middle of screen, no intersection
+                    {
+                        lineLength = 8;
+                    }
+
+                    DrawPixelLineFromTile(startScreenX, CurrentScanline, obj.TileIdx, startObjPixelX, objTargetPixelY, lineLength, true, MathUtil.GetBit(obj.Attributes, 4));
                 }
 
             }
