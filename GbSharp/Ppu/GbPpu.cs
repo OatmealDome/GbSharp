@@ -1,7 +1,9 @@
-using GbSharp.Cpu;
+﻿using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GbSharp.Ppu
 {
@@ -9,6 +11,8 @@ namespace GbSharp.Ppu
     {
         private int CurrentScanlineCyclePosition;
         private PpuMode CurrentMode;
+        private int CyclesLeftForOamDma;
+        private bool SkipDrawingObjectsForScanline;
         private VideoRamRegion VideoRamRegion;
         private OamRegion OamRegion;
         private byte[] RawOutput; // RGBA8_UNorm
@@ -52,6 +56,8 @@ namespace GbSharp.Ppu
         {
             CurrentScanlineCyclePosition = 0;
             CurrentMode = PpuMode.OamScan;
+            CyclesLeftForOamDma = 0;
+            SkipDrawingObjectsForScanline = false;
             VideoRamRegion = new VideoRamRegion();
             OamRegion = new OamRegion();
             RawOutput = new byte[160 * 144 * 4];
@@ -143,6 +149,10 @@ namespace GbSharp.Ppu
                     CurrentScanline = 0;
                     CurrentScanlineCyclePosition = 0;
 
+                    // TODO: confirm if DMA continues or not
+                    CyclesLeftForOamDma = 0;
+                    SkipDrawingObjectsForScanline = false;
+
                     ChangePpuMode(PpuMode.OamScan);
 
                     // Clear the screen
@@ -188,17 +198,17 @@ namespace GbSharp.Ppu
 
                 if (EnableLcd)
                 {
-                int modeInt = (int)CurrentMode;
+                    int modeInt = (int)CurrentMode;
 
-                if (MathUtil.IsBitSet((byte)modeInt, 1))
-                {
-                    MathUtil.SetBit(ref b, 1);
-                }
+                    if (MathUtil.IsBitSet((byte)modeInt, 1))
+                    {
+                        MathUtil.SetBit(ref b, 1);
+                    }
 
-                if (MathUtil.IsBitSet((byte)modeInt, 0))
-                {
-                    MathUtil.SetBit(ref b, 0);
-                }
+                    if (MathUtil.IsBitSet((byte)modeInt, 0))
+                    {
+                        MathUtil.SetBit(ref b, 0);
+                    }
                 }
 
                 return b;
@@ -223,7 +233,12 @@ namespace GbSharp.Ppu
             MemoryMap.RegisterMmio(0xFF48, () => ObjectZeroPalette.ToRegister(), x => ObjectZeroPalette.SetFromRegister(x));
             MemoryMap.RegisterMmio(0xFF49, () => ObjectOnePalette.ToRegister(), x => ObjectOnePalette.SetFromRegister(x));
 
-            MemoryMap.RegisterMmio(0xFF46, () => OamDmaStart, x => OamDmaStart = x);
+            // TODO: Initiating an OAM DMA transfer will lock out all memory except HRAM
+            MemoryMap.RegisterMmio(0xFF46, () => OamDmaStart, x =>
+            {
+                OamDmaStart = x;
+                CyclesLeftForOamDma = 160;
+            });
         }
 
         /// <summary>
@@ -237,6 +252,22 @@ namespace GbSharp.Ppu
             }
 
             CurrentScanlineCyclePosition++;
+
+            if (CyclesLeftForOamDma > 0)
+            {
+                CyclesLeftForOamDma--;
+                SkipDrawingObjectsForScanline = true;
+
+                // Perform the transfer if the cycles left is zero - not really cycle-accurate but should work
+                if (CyclesLeftForOamDma == 0)
+                {
+                    for (int i = 0; i < 0x100; i++)
+                    {
+                        byte value = MemoryMap.Read((ushort)((OamDmaStart * 0x100) + i));
+                        OamRegion.WriteDirect((ushort)i, value);
+                    }
+                }
+            }
 
             switch (CurrentMode)
             {
@@ -290,7 +321,7 @@ namespace GbSharp.Ppu
 
                     break;
             }
-            }
+        }
 
         private void ChangePpuMode(PpuMode targetMode)
         {
@@ -299,7 +330,7 @@ namespace GbSharp.Ppu
             switch (targetMode)
             {
                 case PpuMode.OamScan:
-                    OamRegion.Lock();
+                    //OamRegion.Lock();
 
                     if (OamScanInterruptEnabled)
                     {
@@ -308,12 +339,12 @@ namespace GbSharp.Ppu
 
                     break;
                 case PpuMode.PictureGeneration:
-                    VideoRamRegion.Lock();
+                    //VideoRamRegion.Lock();
 
                     break;
                 case PpuMode.HBlank:
-                    OamRegion.Unlock();
-                    VideoRamRegion.Unlock();
+                    //OamRegion.Unlock();
+                    //VideoRamRegion.Unlock();
 
                     DrawScanline();
 
@@ -327,7 +358,7 @@ namespace GbSharp.Ppu
                     // TODO: does the PPU even listen to this flag? games just write zero to the bit
                     //if (VBlankInterruptEnabled)
                     //{
-                    Cpu.RaiseInterrupt(0);
+                        Cpu.RaiseInterrupt(0);
                     //}
 
                     break;
@@ -346,9 +377,16 @@ namespace GbSharp.Ppu
             SkipDrawingObjectsForScanline = false;
         }
 
-        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY)
+        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY, bool isObject = false, int objectPalette = 0)
         {
-            ushort dataOfs = (ushort)(UseAlternateTileData ? 0x0 : 0x880);
+            ushort dataOfs = 0;
+            if (!isObject && !UseAlternateTileData)
+            {
+                // The primary tile data mode has some weird quirks - the tileIdx here
+                // is actually a signed byte relative to 0x9000
+                dataOfs = 0x1000;
+                tileIdx = (sbyte)tileIdx;
+            }
 
             ushort dataStartOfs = (ushort)(dataOfs + (tileIdx * 16) + (tilePixelY * 2));
 
@@ -357,9 +395,31 @@ namespace GbSharp.Ppu
 
             int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
 
+            if (isObject && colourIdx == 0)
+            {
+                return;
+            }
+
             int outputOfs = ((screenY * 160) + screenX) * 4;
 
-            switch (BgPalette.GetColourFromIdx(colourIdx))
+            MonochromePalette palette;
+            if (isObject)
+            {
+                if (objectPalette == 0)
+                {
+                    palette = ObjectZeroPalette;
+                }
+                else
+                {
+                    palette = ObjectOnePalette;
+                }
+            }
+            else
+            {
+                palette = BgPalette;
+            }
+
+            switch (palette.GetColourFromIdx(colourIdx))
             {
                 case MonochromeColour.Black:
                     RawOutput[outputOfs] = 0;
@@ -418,6 +478,53 @@ namespace GbSharp.Ppu
 
                     // TODO: Window rendering
                 }
+            }
+
+            if (EnableObjects && !SkipDrawingObjectsForScanline)
+            {
+                List<GbObject> objectsToRender = new List<GbObject>();
+
+                for (int i = 0; i < 40; i++)
+                {
+                    ushort objectAddress = (ushort)(i * 0x4);
+
+                    byte objPixelY = OamRegion.ReadDirect(objectAddress);
+
+                    if (objPixelY == 0 || objPixelY >= 160)
+                    {
+                        continue;
+                    }
+
+                    if (MathUtil.InRange(CurrentScanline + 16, objPixelY, UseDoubleHeightObjectSize ? 16 : 8))
+                    {
+                        objectsToRender.Add(new GbObject()
+                        {
+                            XCoord = OamRegion.ReadDirect((ushort)(objectAddress + 1)),
+                            YCoord = objPixelY,
+                            TileIdx = OamRegion.ReadDirect((ushort)(objectAddress + 2)),
+                            Attributes = OamRegion.ReadDirect((ushort)(objectAddress + 3))
+                        });
+                    }
+                }
+                
+                // TODO: CGB orders by first appearance in OAM
+                foreach (GbObject obj in objectsToRender.OrderBy(obj => obj.XCoord).Take(10))
+                {
+                    int objTargetPixelY = (CurrentScanline + 16) - obj.YCoord;
+                    
+                    for (int x = 0; x < 160; x++)
+                    {
+                        if (!MathUtil.InRange(x + 8, obj.XCoord, 8))
+                        {
+                            continue;
+                        }
+
+                        int objTargetPixelX = (x + 8) - obj.XCoord;
+
+                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, MathUtil.GetBit(obj.Attributes, 4));
+                    }
+                }
+
             }
         }
 
