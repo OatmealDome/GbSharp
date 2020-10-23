@@ -1,12 +1,16 @@
+using System.Runtime.CompilerServices;
+
 namespace GbSharp
 {
     internal class MathUtil
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool InRange(int value, int start, int size)
         {
             return value >= start && value < start + size;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsBitSet(byte b, int bit)
         {
             // for example, checking Carry on CpuFlags:
@@ -17,6 +21,7 @@ namespace GbSharp
             return (b & mask) == mask;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetBit(ref byte b, int bit)
         {
             // for example, setting Carry on CpuFlags:
@@ -26,6 +31,7 @@ namespace GbSharp
             b |= (byte)(1 << bit);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ClearBit(ref byte b, int bit)
         {
             // for example, clearing Carry on CpuFlags:
@@ -36,6 +42,7 @@ namespace GbSharp
             b &= (byte)~(1 << bit);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetBit(byte b, int bit)
         {
             return IsBitSet(b, bit) ? 1 : 0;
