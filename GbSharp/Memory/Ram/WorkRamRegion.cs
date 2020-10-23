@@ -9,7 +9,10 @@ namespace GbSharp.Memory
         // 0xE000 to 0xEFFF: Echo Work RAM (bank 0)
         // 0xF000 to 0xFDFF: Echo Work RAM (switchable bank)
 
-        private static readonly int BANK_SIZE = 0x1000;
+        public static readonly int WORK_RAM_START = 0xC000;
+        public static readonly int WORK_RAM_BANK_START = 0xD000;
+        public static readonly int ECHO_RAM_START = 0xE000;
+        public static readonly int BANK_SIZE = 0x1000;
 
         private static readonly int DMG_BANK_COUNT = 2;
         private static readonly int CGB_BANK_COUNT = 8;
@@ -29,33 +32,37 @@ namespace GbSharp.Memory
             }
         }
 
-        private bool OffsetInSwitchableBank(ushort offset)
+        private bool OffsetInSwitchableBank(ushort address)
         {
-            return MathUtil.InRange(offset, (ushort)BANK_SIZE, BANK_SIZE);
+            return MathUtil.InRange(address, WORK_RAM_BANK_START, BANK_SIZE);
         }
 
-        public override byte Read(ushort offset)
+        public override byte Read(ushort address)
         {
             int bankIdx = 0;
-            if (OffsetInSwitchableBank(offset))
+
+            if (OffsetInSwitchableBank(address))
             {
                 bankIdx = CurrentSwitchableBank;
-                offset -= (ushort)BANK_SIZE;
             }
 
-            return Banks[bankIdx][offset];
+            address &= 0xFFF; // mask off top bits so this is a bank offset
+
+            return Banks[bankIdx][address];
         }
 
-        public override void Write(ushort offset, byte val)
+        public override void Write(ushort address, byte val)
         {
             int bankIdx = 0;
-            if (OffsetInSwitchableBank(offset))
+
+            if (OffsetInSwitchableBank(address))
             {
                 bankIdx = CurrentSwitchableBank;
-                offset -= (ushort)BANK_SIZE;
             }
 
-            Banks[bankIdx][offset] = val;
+            address &= 0xFFF; // mask off top bits so this is a bank offset
+
+            Banks[bankIdx][address] = val;
         }
 
     }

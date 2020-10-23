@@ -24,7 +24,7 @@ namespace GbSharp.Ppu.Memory
             Locked = false;
         }
 
-        public override byte Read(ushort offset)
+        public override byte Read(ushort address)
         {
             // Reading OAM from the CPU during certain modes is disallowed
             if (Locked)
@@ -32,15 +32,15 @@ namespace GbSharp.Ppu.Memory
                 return 0xFF;
             }
 
-            return ReadDirect(offset);
+            return ReadDirect((ushort)(address & 0xFF));
         }
 
-        public override void Write(ushort offset, byte val)
+        public override void Write(ushort address, byte val)
         {
             // Writes to OAM from the CPU during certain modes are ignored
             if (!Locked)
             {
-                WriteDirect(offset, val);
+                WriteDirect((ushort)(address & 0xFF), val);
             }
         }
 

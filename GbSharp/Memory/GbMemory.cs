@@ -21,13 +21,13 @@ namespace GbSharp.Memory
         // 0xFF80 to 0xFFFE: High Speed RAM
         // 0xFFFF          : IE Register
 
-        private readonly Dictionary<ushort, Tuple<ushort, MemoryRegion>> MemoryMap;
+        private readonly Dictionary<ushort, MemoryRegion> MemoryMap;
         private BootRomRegion BootRomRegion;
         private bool BootRomAccessible;
 
         public GbMemory()
         {
-            MemoryMap = new Dictionary<ushort, Tuple<ushort, MemoryRegion>>();
+            MemoryMap = new Dictionary<ushort, MemoryRegion>();
             BootRomAccessible = false;
 
             WorkRamRegion workRam = new WorkRamRegion();
@@ -44,31 +44,19 @@ namespace GbSharp.Memory
         {
             for (int i = 0; i < size; i++)
             {
-                MemoryMap[(ushort)(address + i)] = new Tuple<ushort, MemoryRegion>(address, region);
-        }
+                MemoryMap[(ushort)(address + i)] = region;
+            }
         }
 
         public void RegisterMmio(ushort address, Func<byte> readFunc, Action<byte> writeFunc)
         {
-            MemoryMap[address] = new Tuple<ushort, MemoryRegion>(address, new MmioRegion(readFunc, writeFunc));
+            MemoryMap[address] = new MmioRegion(readFunc, writeFunc);
         }
 
         public void RegisterBootRom(byte[] bootRom)
         {
             BootRomRegion = new BootRomRegion(bootRom);
             BootRomAccessible = true;
-        }
-
-        private Tuple<ushort, MemoryRegion> GetRegion(ushort address)
-        {
-            if (MemoryMap.TryGetValue(address, out Tuple<ushort, MemoryRegion> tuple))
-                {
-                ushort offset = (ushort)(address - tuple.Item1);
-
-                return new Tuple<ushort, MemoryRegion>(offset, tuple.Item2);
-            }
-
-            return null;
         }
 
         public byte Read(ushort address)
@@ -81,11 +69,9 @@ namespace GbSharp.Memory
                 }
             }
 
-            Tuple<ushort, MemoryRegion> regionPair = GetRegion(address);
-
-            if (regionPair != null)
+            if (MemoryMap.TryGetValue(address, out MemoryRegion region))
             {
-                return regionPair.Item2.Read(regionPair.Item1);
+                return region.Read(address);
             }
             else
             {
@@ -96,17 +82,15 @@ namespace GbSharp.Memory
 
         public void Write(ushort address, byte val)
         {
-            Tuple<ushort, MemoryRegion> regionPair = GetRegion(address);
-
-            if (regionPair != null)
+            if (MemoryMap.TryGetValue(address, out MemoryRegion region))
             {
-                regionPair.Item2.Write(regionPair.Item1, val);
+                region.Write(address, val);
             }
             else
             {
                 Console.WriteLine($"Invalid write to address {address:x}, value {val:x}");
             }
         }
-        
+
     }
 }
