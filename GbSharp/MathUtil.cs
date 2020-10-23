@@ -45,7 +45,7 @@ namespace GbSharp
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetBit(byte b, int bit)
         {
-            return IsBitSet(b, bit) ? 1 : 0;
+            return (b >> bit) & 0x1;
         }
 
     }
