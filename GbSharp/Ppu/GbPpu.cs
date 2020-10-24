@@ -401,33 +401,33 @@ namespace GbSharp.Ppu
             byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs);
             byte tileHigh = VideoRamRegion.ReadDirect(dataStartOfs + 1);
 
-                int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
+            int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
 
-                if (isObject && colourIdx == 0)
-                {
+            if (isObject && colourIdx == 0)
+            {
                 return;
-                }
+            }
 
-                ColourPalette palette;
-                if (isObject)
-                {
-                    palette = ObjectPalettes[objectPalette];
-                }
-                else
-                {
-                    palette = BgPalettes[0];
-                }
+            ColourPalette palette;
+            if (isObject)
+            {
+                palette = ObjectPalettes[objectPalette];
+            }
+            else
+            {
+                palette = BgPalettes[0];
+            }
 
             int outputOfs = ((screenY * 160) + screenX) * 4;
 
-                LcdColour colour = palette.GetColour(colourIdx);
-                RawOutput[outputOfs] = colour.R;
-                RawOutput[outputOfs + 1] = colour.G;
-                RawOutput[outputOfs + 2] = colour.B;
+            LcdColour colour = palette.GetColour(colourIdx);
+            RawOutput[outputOfs] = colour.R;
+            RawOutput[outputOfs + 1] = colour.G;
+            RawOutput[outputOfs + 2] = colour.B;
 
-                // Alpha should always be 255 (1.0f)
-                RawOutput[outputOfs + 3] = 255;
-            }
+            // Alpha should always be 255 (1.0f)
+            RawOutput[outputOfs + 3] = 255;
+        }
 
         private void DrawScanline()
         {
@@ -442,8 +442,8 @@ namespace GbSharp.Ppu
                 for (byte x = 0; x < 160; x++)
                 {
                     byte bgPixelX = (byte)(x + BgScrollX);
-                int bgTileX = bgPixelX / 8;
-                int bgTilePixelX = bgPixelX % 8;
+                    int bgTileX = bgPixelX / 8;
+                    int bgTilePixelX = bgPixelX % 8;
 
                     byte tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
 
@@ -484,7 +484,7 @@ namespace GbSharp.Ppu
                         });
                     }
                 }
-                
+
                 // TODO: CGB orders by first appearance in OAM
                 // TODO: reverse order of Take enumerable - otherwise sprites with higher X will take priority
                 foreach (GbObject obj in objectsToRender.OrderBy(obj => obj.XCoord).Take(10))
