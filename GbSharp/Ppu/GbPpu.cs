@@ -361,11 +361,13 @@ namespace GbSharp.Ppu
 
                     break;
                 case PpuMode.VBlank:
-                    // TODO: does the PPU even listen to this flag? games just write zero to the bit
-                    //if (VBlankInterruptEnabled)
-                    //{
-                        Cpu.RaiseInterrupt(0);
-                    //}
+                    // The VBlank STAT interrupt is *not the same* as the VBlank interrupt.
+                    if (VBlankInterruptEnabled)
+                    {
+                        Cpu.RaiseInterrupt(1);
+                    }
+
+                    Cpu.RaiseInterrupt(0);
 
                     break;
             }
