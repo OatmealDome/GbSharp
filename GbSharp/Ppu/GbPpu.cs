@@ -1,4 +1,4 @@
-﻿using GbSharp.Cpu;
+using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Ppu.Memory;
 using GbSharp.Ppu.Palette;
@@ -280,15 +280,14 @@ namespace GbSharp.Ppu
             switch (CurrentMode)
             {
                 case PpuMode.OamScan:
-                    if (CurrentScanlineCyclePosition == 20)
+                    if (CurrentScanlineCyclePosition == 80)
                     {
                         ChangePpuMode(PpuMode.PictureGeneration);
                     }
 
                     break;
                 case PpuMode.PictureGeneration:
-                    // TODO: Can be variable
-                    if (CurrentScanlineCyclePosition == 63)
+                    if (CurrentScanlineCyclePosition == 252)
                     {
                         ChangePpuMode(PpuMode.HBlank);
                     }
@@ -298,7 +297,7 @@ namespace GbSharp.Ppu
                     VideoRamRegion.Unlock();
                     OamRegion.Unlock();
 
-                    if (CurrentScanlineCyclePosition == 114)
+                    if (CurrentScanlineCyclePosition == 456)
                     {
                         ChangeScanline(false);
 
@@ -314,7 +313,7 @@ namespace GbSharp.Ppu
 
                     break;
                 case PpuMode.VBlank:
-                    if (CurrentScanlineCyclePosition == 114)
+                    if (CurrentScanlineCyclePosition == 456)
                     {
                         if (CurrentScanline == 153)
                         {
