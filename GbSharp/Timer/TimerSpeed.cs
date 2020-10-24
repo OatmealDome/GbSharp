@@ -1,4 +1,4 @@
-﻿namespace GbSharp.Cpu.Timer
+﻿namespace GbSharp.Timer
 {
     enum TimerSpeed
     {

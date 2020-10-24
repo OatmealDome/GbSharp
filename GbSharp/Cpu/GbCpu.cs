@@ -1,4 +1,3 @@
-using GbSharp.Cpu.Timer;
 using GbSharp.Memory;
 using System;
 
@@ -22,7 +21,6 @@ namespace GbSharp.Cpu
         private byte EnabledInterrupts;
         private byte RaisedInterrupts;
 
-        private readonly GbCpuTimer Timer;
         private readonly GbMemory MemoryMap;
 
         public GbCpu(GbMemory memory)
@@ -44,7 +42,6 @@ namespace GbSharp.Cpu
             EnabledInterrupts = 0;
             RaisedInterrupts = 0;
 
-            Timer = new GbCpuTimer(this, memory);
             MemoryMap = memory;
 
             // Register MMIO
@@ -99,8 +96,6 @@ namespace GbSharp.Cpu
             {
                 cycles += ExecuteInstruction();
             }
-
-            Timer.Tick(cycles);
 
             if (enableInterruptsAfter)
             {

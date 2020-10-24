@@ -5,6 +5,7 @@ using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Memory.Rom;
 using GbSharp.Ppu;
+using GbSharp.Timer;
 using System;
 using System.Diagnostics;
 
@@ -14,6 +15,7 @@ namespace GbSharp
     {
         private readonly GbMemory MemoryMap;
         private readonly GbCpu Cpu;
+        private readonly GbTimer Timer;
         private readonly GbPpu Ppu;
         private readonly GbController Controller;
 
@@ -27,6 +29,7 @@ namespace GbSharp
         {
             MemoryMap = new GbMemory();
             Cpu = new GbCpu(MemoryMap);
+            Timer = new GbTimer(Cpu, MemoryMap);
             Ppu = new GbPpu(Cpu, MemoryMap);
             Controller = new GbController(Cpu, MemoryMap);
         }
@@ -47,6 +50,8 @@ namespace GbSharp
             while (cycles < 17564)
             {
                 int lastCpuCycles = Cpu.Step();
+
+                Timer.Tick(lastCpuCycles);
 
                 for (int i = 0; i < (lastCpuCycles * 4); i++)
                 {

@@ -1,8 +1,9 @@
-﻿using GbSharp.Memory;
+﻿using GbSharp.Cpu;
+using GbSharp.Memory;
 
-namespace GbSharp.Cpu.Timer
+namespace GbSharp.Timer
 {
-    class GbCpuTimer
+    class GbTimer
     {
         private bool Enabled;
         private TimerSpeed Speed;
@@ -17,7 +18,7 @@ namespace GbSharp.Cpu.Timer
 
         private readonly GbCpu Cpu;
 
-        public GbCpuTimer(GbCpu cpu, GbMemory memory)
+        public GbTimer(GbCpu cpu, GbMemory memory)
         {
             memory.RegisterMmio(0xFF04, () => Divider, (x) =>
             {
