@@ -1,5 +1,6 @@
 ﻿// #define FRAME_TIME_LOGGING
 
+using GbSharp.Controller;
 using GbSharp.Cpu;
 using GbSharp.Memory;
 using GbSharp.Memory.Rom;
@@ -14,6 +15,7 @@ namespace GbSharp
         private readonly GbMemory MemoryMap;
         private readonly GbCpu Cpu;
         private readonly GbPpu Ppu;
+        private readonly GbController Controller;
 
 #if FRAME_TIME_LOGGING
         private double[] RunningAverages = new double[120];
@@ -26,6 +28,7 @@ namespace GbSharp
             MemoryMap = new GbMemory();
             Cpu = new GbCpu(MemoryMap);
             Ppu = new GbPpu(Cpu, MemoryMap);
+            Controller = new GbController(Cpu, MemoryMap);
         }
 
         public void RunFrame()
@@ -96,6 +99,11 @@ namespace GbSharp
             }
 
             MemoryMap.RegisterRegion(CartridgeRomRegion.CreateRomRegion(rom));
+        }
+
+        public void UpdateControllerKeyState(ControllerKey key, bool state)
+        {
+            Controller.UpdateKeyState(key, state);
         }
 
         public byte[] GetPixelOutput()
