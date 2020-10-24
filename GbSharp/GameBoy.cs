@@ -1,4 +1,4 @@
-// #define FRAME_TIME_LOGGING
+﻿// #define FRAME_TIME_LOGGING
 
 using GbSharp.Cpu;
 using GbSharp.Memory;
@@ -91,11 +91,11 @@ namespace GbSharp
                 MemoryMap.RegisterBootRom(bootRom);
             }
             else
-        {
+            {
                 Cpu.SetDefaultStateAfterBootRom();
             }
 
-            MemoryMap.RegisterRegion(new DirectRomRegion(rom));
+            MemoryMap.RegisterRegion(CartridgeRomRegion.CreateRomRegion(rom));
         }
 
         public byte[] GetPixelOutput()
