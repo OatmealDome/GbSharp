@@ -336,7 +336,7 @@ namespace GbSharp.Ppu
             switch (targetMode)
             {
                 case PpuMode.OamScan:
-                    //OamRegion.Lock();
+                    OamRegion.Lock();
 
                     if (OamScanInterruptEnabled)
                     {
@@ -345,12 +345,12 @@ namespace GbSharp.Ppu
 
                     break;
                 case PpuMode.PictureGeneration:
-                    //VideoRamRegion.Lock();
+                    VideoRamRegion.Lock();
 
                     break;
                 case PpuMode.HBlank:
-                    //OamRegion.Unlock();
-                    //VideoRamRegion.Unlock();
+                    OamRegion.Unlock();
+                    VideoRamRegion.Unlock();
 
                     DrawScanline();
 
