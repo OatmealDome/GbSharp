@@ -434,27 +434,45 @@ namespace GbSharp.Ppu
             if (PrioritizeBgAndWindow)
             {
                 int bgTileMapOfs = UseAlternateBgTileMap ? 0x1c00 : 0x1800;
+                int windowTileMapOfs = UseAlternateWindowTileMap ? 0x1c00 : 0x1800;
 
                 byte bgPixelY = (byte)(CurrentScanline + BgScrollY);
                 int bgTileY = bgPixelY / 8;
                 int bgTilePixelY = bgPixelY % 8;
 
+                int realWindowX = WindowX - 7;
+                bool windowChecking = EnableWindow && realWindowX >= 0 && CurrentScanline >= WindowY;
+
                 for (byte x = 0; x < 160; x++)
                 {
+                    byte tileIdx;
+                    int tilePixelX;
+                    int tilePixelY;
+
+                    if (windowChecking && x >= realWindowX)
+                    {
+                        int windowPixelY = CurrentScanline - WindowY;
+                        int windowTileY = windowPixelY / 8;
+                        tilePixelY = windowPixelY % 8;
+
+                        int windowPixelX = x - realWindowX;
+                        int windowTileX = windowPixelX / 8;
+                        tilePixelX = windowPixelX % 8;
+
+                        tileIdx = VideoRamRegion.ReadDirect(windowTileMapOfs + (windowTileY * 32) + windowTileX);
+                    }
+                    else
+                    {
+                        tilePixelY = bgTilePixelY;
+
                     byte bgPixelX = (byte)(x + BgScrollX);
                     int bgTileX = bgPixelX / 8;
-                    int bgTilePixelX = bgPixelX % 8;
+                        tilePixelX = bgPixelX % 8;
 
-                    byte tileIdx = VideoRamRegion.ReadDirect((ushort)(bgTileMapOfs + ((bgTileY * 32) + bgTileX)));
-
-                    DrawTilePixel(x, CurrentScanline, tileIdx, bgTilePixelX, bgTilePixelY);
+                        tileIdx = VideoRamRegion.ReadDirect(bgTileMapOfs + (bgTileY * 32) + bgTileX);
                 }
 
-                if (EnableWindow)
-                {
-                    int windowTileMapOfs = UseAlternateWindowTileMap ? 0x1c00 : 0x1800;
-
-                    // TODO: Window rendering
+                    DrawTilePixel(x, CurrentScanline, tileIdx, tilePixelX, tilePixelY);
                 }
             }
 
