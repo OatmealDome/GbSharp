@@ -494,6 +494,12 @@ namespace GbSharp.Ppu
 
                     int objTargetPixelY = (CurrentScanline + 16) - obj.YCoord;
 
+                    // Vertical flip
+                    if (MathUtil.IsBitSet(obj.Attributes, 6))
+                    {
+                        objTargetPixelY = 7 - objTargetPixelY;
+                    }
+
                     for (int x = 0; x < 160; x++)
                     {
                         if (!MathUtil.InRange(x + 8, obj.XCoord, 8))
@@ -502,6 +508,12 @@ namespace GbSharp.Ppu
                         }
 
                         int objTargetPixelX = (x + 8) - obj.XCoord;
+
+                        // Horizontal flip
+                        if (MathUtil.IsBitSet(obj.Attributes, 5))
+                        {
+                            objTargetPixelX = 7 - objTargetPixelX;
+                        }
 
                         DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, MathUtil.GetBit(obj.Attributes, 4));
                     }
