@@ -63,6 +63,10 @@ namespace GbSharp.Memory.Rom
                 case 0x08: // ROM + RAM
                 case 0x09: // ROM + RAM + BATTERY
                     return new DirectRomRegion(rom);
+                case 0x01: // MBC1 ROM
+                case 0x02: // MBC1 ROM + RAM
+                case 0x03: // MBC1 ROM + RAM + BATTERY
+                    return new Mbc1RomRegion(rom);
                 default:
                     throw new Exception($"Unsupported cartridge type {type:x}");
             }
