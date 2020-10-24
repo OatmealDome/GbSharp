@@ -1,35 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace GbSharp.Memory.Rom
+﻿namespace GbSharp.Memory.Rom
 {
-    class DirectRomRegion : MemoryRegion
+    class DirectRomRegion : CartridgeRomRegion
     {
-        private readonly int ROM_START = 0x0;
-        private readonly int ROM_SIZE = 0x8000;
-
-        private readonly byte[] Rom;
-
-        public DirectRomRegion(byte[] rom)
+        public DirectRomRegion(byte[] rom) : base(rom)
         {
-            Rom = rom;
+
         }
 
-        public override IEnumerable<Tuple<int, int>> GetHandledRanges()
+        public override byte Read(int address)
         {
-            return new List<Tuple<int, int>>()
+            return Rom[address];
+        }
+
+        public override void Write(int address, byte val)
+        {
+            if (MathUtil.InRange(address, EXTERNAL_RAM_START, EXTERNAL_RAM_SIZE))
             {
-                new Tuple<int, int>(ROM_START, ROM_SIZE)
-            };
-        }
+                if (RamEnabled)
+                {
+                    Ram[address & 0xFFF] = val;
+                }
+            }
 
-        public override byte Read(int offset)
-        {
-            return Rom[offset];
-        }
-
-        public override void Write(int offset, byte val)
-        {
             // for simple ROMs (no mapper), writing isn't allowed
             // something probably went very wrong
         }
