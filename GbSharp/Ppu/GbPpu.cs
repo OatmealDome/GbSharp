@@ -487,6 +487,11 @@ namespace GbSharp.Ppu
                 // TODO: reverse order of Take enumerable - otherwise sprites with higher X will take priority
                 foreach (GbObject obj in objectsToRender.OrderBy(obj => obj.XCoord).Take(10))
                 {
+                    if (obj.XCoord == 0 || obj.XCoord >= 168)
+                    {
+                        continue;
+                    }
+
                     int objTargetPixelY = (CurrentScanline + 16) - obj.YCoord;
 
                     for (int x = 0; x < 160; x++)
