@@ -19,7 +19,7 @@
         {
             if (Mode == 0)
             {
-                return address & 0xFFF;
+                return address & 0x1FFF;
             }
             else
             {

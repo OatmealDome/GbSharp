@@ -18,7 +18,7 @@
             {
                 if (RamEnabled)
                 {
-                    Ram[address & 0xFFF] = val;
+                    Ram[address & 0x1FFF] = val;
                 }
             }
 
