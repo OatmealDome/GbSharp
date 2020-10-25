@@ -375,12 +375,13 @@ namespace GbSharp.Ppu
 
         private void ChangeScanline(bool toTop)
         {
+            CurrentScanline = (byte)(toTop ? 0 : CurrentScanline + 1);
+
             if (CoincidenceInterruptEnabled && CurrentScanline == ScanlineCompare)
             {
                 Cpu.RaiseInterrupt(1);
             }
 
-            CurrentScanline = (byte)(toTop ? 0 : CurrentScanline + 1);
             CurrentScanlineCyclePosition = 0;
             SkipDrawingObjectsForScanline = false;
         }
