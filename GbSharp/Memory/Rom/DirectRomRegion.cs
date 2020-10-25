@@ -23,10 +23,7 @@
         {
             if (MathUtil.InRange(address, EXTERNAL_RAM_START, EXTERNAL_RAM_SIZE))
             {
-                if (RamEnabled)
-                {
-                    Ram[address & 0x1FFF] = val;
-                }
+                Ram[address & 0x1FFF] = val;
             }
 
             // for simple ROMs (no mapper), writing isn't allowed
