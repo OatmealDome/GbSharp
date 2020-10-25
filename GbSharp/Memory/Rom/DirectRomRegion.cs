@@ -9,7 +9,14 @@
 
         public override byte Read(int address)
         {
-            return Rom[address];
+            if (MathUtil.InRange(address, EXTERNAL_RAM_START, EXTERNAL_RAM_SIZE))
+            {
+                return Ram[address & 0x1FFF];
+            }
+            else
+            {
+                return Rom[address];
+            }
         }
 
         public override void Write(int address, byte val)
