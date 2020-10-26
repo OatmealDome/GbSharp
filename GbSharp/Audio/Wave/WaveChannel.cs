@@ -1,7 +1,6 @@
-﻿using GbSharp.Audio.Wave;
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
-namespace GbSharp.Audio.Square
+namespace GbSharp.Audio.Wave
 {
     class WaveChannel : AudioChannel
     {
@@ -68,7 +67,7 @@ namespace GbSharp.Audio.Square
                 return 0xFF;
             }, (x) =>
             {
-                ResetFrequencyClocks((Frequency & 0x700) | x);
+                ResetFrequencyClocks(Frequency & 0x700 | x);
             });
 
             MemoryMap.RegisterMmio(startAddress + 4, () =>
@@ -86,9 +85,9 @@ namespace GbSharp.Audio.Square
                 bool WillBeEnabled = MathUtil.IsBitSet(x, 7);
                 LengthEnabled = MathUtil.IsBitSet(x, 6);
 
-                int frequencyMsb = (x << 8) & 0x700;
+                int frequencyMsb = x << 8 & 0x700;
 
-                ResetFrequencyClocks(frequencyMsb | (Frequency & 0xFF));
+                ResetFrequencyClocks(frequencyMsb | Frequency & 0xFF);
 
                 if (WillBeEnabled)
                 {
@@ -109,7 +108,7 @@ namespace GbSharp.Audio.Square
             }
 
             Frequency = newFrequency;
-            TicksToNextFrequencyClockDefault = ((2048 - Frequency) * 2);
+            TicksToNextFrequencyClockDefault = (2048 - Frequency) * 2;
         }
 
         protected override void EnableChannel()

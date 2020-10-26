@@ -1,4 +1,5 @@
 ﻿using GbSharp.Audio.Square;
+using GbSharp.Audio.Wave;
 using GbSharp.Memory;
 
 namespace GbSharp.Audio
