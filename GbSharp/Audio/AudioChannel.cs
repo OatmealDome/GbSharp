@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
 namespace GbSharp.Audio
 {
@@ -72,8 +72,8 @@ namespace GbSharp.Audio
             {
                 if (MultiplyVolumeAfterTick)
                 {
-                Sample *= Volume;
-            }
+                    Sample *= Volume;
+                }
             }
             else
             {

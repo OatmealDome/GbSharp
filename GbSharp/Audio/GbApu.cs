@@ -7,6 +7,7 @@ namespace GbSharp.Audio
     {
         private SquareChannel SquareOne;
         private SquareChannel SquareTwo;
+        private WaveChannel WaveChannel;
 
         private float[] SampleBuffer;
         private int SampleBufferIdx;
@@ -146,12 +147,14 @@ namespace GbSharp.Audio
             // TODO: this isn't even remotely correct
             SquareOne = new SquareChannel(MemoryMap, 0xFF10, true);
             SquareTwo = new SquareChannel(MemoryMap, 0xFF15, false);
+            WaveChannel = new WaveChannel(MemoryMap, 0xFF1A);
         }
 
         public bool Tick()
         {
             SquareOne.Tick();
             SquareTwo.Tick();
+            WaveChannel.Tick();
 
             CyclesToNextSample--;
 
@@ -205,11 +208,16 @@ namespace GbSharp.Audio
             {
                 SampleBuffer[bufferIdx] += SampleToFloat(SquareTwo.GetSample(), terminalVolume);
             }
+
+            if (ChannelOutputEnabled[(int)outputTerminal][2])
+            {
+                SampleBuffer[bufferIdx] += SampleToFloat(WaveChannel.GetSample(), terminalVolume);
+            }
         }
 
         private float SampleToFloat(int sample, int volume)
         {
-            return sample * (volume + 1) / 255f;
+            return sample * (volume + 1) / 100f;
         }
 
         public float[] GetSampleBuffer()
