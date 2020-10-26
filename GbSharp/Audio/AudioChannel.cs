@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 
 namespace GbSharp.Audio
 {
@@ -37,6 +37,8 @@ namespace GbSharp.Audio
                 return;
             }
 
+            TickChannel();
+
             CyclesToNextSequencerClock--;
 
             if (CyclesToNextSequencerClock == 0)
@@ -60,8 +62,6 @@ namespace GbSharp.Audio
 
                 CyclesToNextSequencerClock = 8192;
             }
-
-            TickChannel();
 
             if (DacEnabled)
             {
