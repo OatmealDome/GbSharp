@@ -125,7 +125,9 @@ namespace GbSharp.Audio.Square
             CurrentNybble = 0;
             Volume = StartVolume;
 
-            // TODO: sweep
+            // Quirk: the sample buffer isn't cleared, so the first sample output
+            // when the channel is enabled will be the high nybble of the last
+            // played sample byte
         }
 
         protected override void TickChannel()
