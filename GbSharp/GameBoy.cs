@@ -1,5 +1,6 @@
 ﻿// #define FRAME_TIME_LOGGING
 
+using GbSharp.Audio;
 using GbSharp.Controller;
 using GbSharp.Cpu;
 using GbSharp.Memory;
@@ -17,7 +18,11 @@ namespace GbSharp
         private readonly GbCpu Cpu;
         private readonly GbTimer Timer;
         private readonly GbPpu Ppu;
+        private readonly GbApu Apu;
         private readonly GbController Controller;
+
+        public delegate void NotifySamplesReady(float[] samples);
+        public event NotifySamplesReady SamplesReady;
 
 #if FRAME_TIME_LOGGING
         private double[] RunningAverages = new double[120];
@@ -31,6 +36,7 @@ namespace GbSharp
             Cpu = new GbCpu(MemoryMap);
             Timer = new GbTimer(Cpu, MemoryMap);
             Ppu = new GbPpu(Cpu, MemoryMap);
+            Apu = new GbApu(MemoryMap);
             Controller = new GbController(Cpu, MemoryMap);
         }
 
@@ -56,6 +62,12 @@ namespace GbSharp
                 for (int i = 0; i < (lastCpuCycles * 4); i++)
                 {
                     Ppu.Update();
+                    
+                    if (Apu.Tick())
+                    {
+                        // Samples are ready for output
+                        SamplesReady?.Invoke(Apu.GetSampleBuffer());
+                    }
                 }
 
                 cycles += lastCpuCycles;
