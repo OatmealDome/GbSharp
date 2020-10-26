@@ -18,6 +18,11 @@ namespace GbSharp.Audio
 
         protected int Sample;
 
+        protected abstract bool MultiplyVolumeAfterTick
+        {
+            get;
+        }
+
         protected readonly GbMemory MemoryMap;
 
         protected AudioChannel(GbMemory memory)
@@ -65,7 +70,10 @@ namespace GbSharp.Audio
 
             if (DacEnabled)
             {
+                if (MultiplyVolumeAfterTick)
+                {
                 Sample *= Volume;
+            }
             }
             else
             {

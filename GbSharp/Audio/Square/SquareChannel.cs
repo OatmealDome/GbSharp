@@ -1,7 +1,4 @@
 ﻿using GbSharp.Memory;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace GbSharp.Audio.Square
 {
@@ -36,6 +33,8 @@ namespace GbSharp.Audio.Square
 
         // MR13 and MR14 (Frequency LSB and MSB)
         private int Frequency;
+
+        protected override bool MultiplyVolumeAfterTick => true;
 
         public SquareChannel(GbMemory memory, int startAddress, bool hasSweep) : base(memory)
         {
