@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 
 namespace GbSharp.Audio.Square
 {
@@ -135,10 +135,6 @@ namespace GbSharp.Audio.Square
                 if (WillBeEnabled)
                 {
                     EnableChannel();
-                }
-                else if (!WillBeEnabled)
-                {
-                    Enabled = false;
                 }
             });
         }

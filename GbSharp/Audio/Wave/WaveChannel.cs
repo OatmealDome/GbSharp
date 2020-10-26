@@ -93,10 +93,6 @@ namespace GbSharp.Audio.Wave
                 {
                     EnableChannel();
                 }
-                else
-                {
-                    Enabled = false;
-                }
             });
         }
 
