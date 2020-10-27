@@ -24,7 +24,7 @@ namespace GbSharp.Ppu.Memory
 
             memory.RegisterMmio(0xFF4F, () =>
             {
-                return (byte)CurrentSwitchableBank;
+                return (byte)(CurrentSwitchableBank | 0xFE);
             }, (x) =>
             {
                 // ignore if not CGB
