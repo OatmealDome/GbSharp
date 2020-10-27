@@ -35,16 +35,9 @@ namespace GbSharp.Audio
 
         public void Tick()
         {
-            if (!Enabled)
-            {
-                Sample = 0;
-
-                return;
-            }
-
-            TickChannel();
-
             CyclesToNextSequencerClock--;
+
+            bool sequencerTicked = false;
 
             if (CyclesToNextSequencerClock == 0)
             {
@@ -55,7 +48,18 @@ namespace GbSharp.Audio
                     FrameSequencer = 0;
                 }
 
-                if (LengthEnabled)
+                ClockPreChannelTick();
+
+                CyclesToNextSequencerClock = 8192;
+
+                sequencerTicked = true;
+            }
+
+            TickChannel();
+
+            if (sequencerTicked)
+            {
+                if (LengthEnabled && FrameSequencer % 2 == 0)
                 {
                     ClockLength();
                 }
@@ -64,11 +68,9 @@ namespace GbSharp.Audio
                 {
                     ClockVolumeOrEnvelope();
                 }
-
-                CyclesToNextSequencerClock = 8192;
             }
 
-            if (DacEnabled)
+            if (DacEnabled && Enabled)
             {
                 if (MultiplyVolumeAfterTick)
                 {
@@ -91,13 +93,13 @@ namespace GbSharp.Audio
             return Sample;
         }
 
+        protected virtual void ClockPreChannelTick()
+        {
+            ;
+        }
+
         private void ClockLength()
         {
-            if (FrameSequencer % 2 != 0)
-            {
-                return;
-            }
-
             LengthCounter--;
 
             if (LengthCounter == 0)
