@@ -23,6 +23,8 @@ namespace GbSharp.Cpu
 
         private readonly GbMemory MemoryMap;
 
+        private HardwareType HardwareType;
+
         public GbCpu(GbMemory memory)
         {
             // Create RegisterPairs and set initial values
@@ -104,6 +106,11 @@ namespace GbSharp.Cpu
             }
 
             return cycles;
+        }
+
+        public void SetHardwareType(HardwareType type)
+        {
+            HardwareType = type;
         }
 
         /// <summary>

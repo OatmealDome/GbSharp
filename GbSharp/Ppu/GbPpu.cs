@@ -22,6 +22,8 @@ namespace GbSharp.Ppu
         private GbCpu Cpu;
         private GbMemory MemoryMap;
 
+        private HardwareType HardwareType;
+
         // LCD Control (0xFF40)
         private bool EnableLcd;
         private bool UseAlternateWindowTileMap;
@@ -569,6 +571,11 @@ namespace GbSharp.Ppu
                 }
 
             }
+        }
+
+        public void SetHardwareType(HardwareType type)
+        {
+            HardwareType = type;
         }
 
         public byte[] GetPixelOutput()

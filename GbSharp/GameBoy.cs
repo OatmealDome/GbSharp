@@ -34,13 +34,14 @@ namespace GbSharp
 
         public GameBoy(HardwareType type = HardwareType.AutoSelect)
         {
-            HardwareType = type;
             MemoryMap = new GbMemory();
             Cpu = new GbCpu(MemoryMap);
             Timer = new GbTimer(Cpu, MemoryMap);
             Ppu = new GbPpu(Cpu, MemoryMap);
             Apu = new GbApu(MemoryMap);
             Controller = new GbController(Cpu, MemoryMap);
+
+            SetHardwareType(type);
         }
 
         public void RunFrame()
@@ -107,13 +108,21 @@ namespace GbSharp
 #endif
         }
 
+        private void SetHardwareType(HardwareType type)
+        {
+            HardwareType = type;
+
+            Cpu.SetHardwareType(type);
+            Ppu.SetHardwareType(type);
+        }
+
         public void LoadRom(byte[] rom, byte[] bootRom = null)
         {
             CartridgeRomRegion romRegion = CartridgeRomRegion.CreateRomRegion(rom);
 
             if (HardwareType == HardwareType.AutoSelect)
             {
-                HardwareType = romRegion.GetBestSupportedHardware();
+                SetHardwareType(romRegion.GetBestSupportedHardware());
             }
 
             if (bootRom != null)
