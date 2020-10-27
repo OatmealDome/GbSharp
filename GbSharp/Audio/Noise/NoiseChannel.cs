@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
 namespace GbSharp.Audio.Noise
 {
@@ -60,12 +60,6 @@ namespace GbSharp.Audio.Noise
                 StartVolume = x >> 4;
                 IncreaseEnvelope = MathUtil.IsBitSet(x, 3);
                 EnvelopePeriod = x & 0x7; // lower 3 bits
-
-                // Quirk: a period of 0 is treated as 8
-                if (EnvelopePeriod == 0)
-                {
-                    EnvelopePeriod = 8;
-                }
             });
 
             MemoryMap.RegisterMmio(startAddress + 3, () =>
