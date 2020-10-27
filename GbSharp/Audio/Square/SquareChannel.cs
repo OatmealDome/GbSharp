@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 
 namespace GbSharp.Audio.Square
 {
@@ -15,6 +15,9 @@ namespace GbSharp.Audio.Square
         private bool HasSweep;
         private int CurrentDutyCycleIdx;
         private int CurrentEnvelopePeriod;
+        private bool SweepEnabled;
+        private int CurrentSweepPeriod;
+        private uint FrequencyShadowRegister;
         private int TicksToNextFrequencyClock;
         private int TicksToNextFrequencyClockDefault;
 
@@ -32,7 +35,7 @@ namespace GbSharp.Audio.Square
         private int EnvelopePeriod; // also called steps in official manual
 
         // MR13 and MR14 (Frequency LSB and MSB)
-        private int Frequency;
+        private uint Frequency;
 
         protected override bool MultiplyVolumeAfterTick => true;
 
@@ -116,7 +119,7 @@ namespace GbSharp.Audio.Square
                 bool WillBeEnabled = MathUtil.IsBitSet(x, 7);
                 LengthEnabled = MathUtil.IsBitSet(x, 6);
 
-                int frequencyMsb = (x << 8) & 0x700;
+                uint frequencyMsb = (uint)((x << 8) & 0x700);
 
                 ResetFrequencyClocks(frequencyMsb | (Frequency & 0xFF));
 
@@ -127,15 +130,31 @@ namespace GbSharp.Audio.Square
             });
         }
 
-        private void ResetFrequencyClocks(int newFrequency)
+        private void ResetFrequencyClocks(uint newFrequency)
         {
-            if (Frequency == newFrequency)
+            Frequency = newFrequency;
+            TicksToNextFrequencyClockDefault = (int)((2048 - Frequency) * 4);
+        }
+
+        private uint CalculateNewFrequencyForSweep()
+        {
+            uint newFrequency = FrequencyShadowRegister >> SweepShift;
+
+            if (!SweepNegate)
             {
-                return;
+                newFrequency = FrequencyShadowRegister + newFrequency;
+            }
+            else
+            {
+                newFrequency = FrequencyShadowRegister - newFrequency;
             }
 
-            Frequency = newFrequency;
-            TicksToNextFrequencyClockDefault = ((2048 - Frequency) * 4);
+            if (newFrequency > 2047)
+            {
+                Enabled = false;
+            }
+
+            return newFrequency;
         }
 
         protected override void EnableChannel()
@@ -147,20 +166,34 @@ namespace GbSharp.Audio.Square
                 LengthCounter = 64;
             }
 
+            CurrentDutyCycleIdx = 0;
             TicksToNextFrequencyClock = TicksToNextFrequencyClockDefault;
             CurrentEnvelopePeriod = EnvelopePeriod;
             Volume = StartVolume;
 
-            // TODO: sweep
+            if (HasSweep)
+            {
+                SweepEnabled = SweepPeriod != 0 || SweepShift != 0;
+                
+                CurrentSweepPeriod = SweepPeriod;
+
+                // Quirk: a period of 0 is treated as 8
+                if (SweepPeriod == 0)
+                {
+                    CurrentSweepPeriod = 8;
+                }
+
+                FrequencyShadowRegister = Frequency;
+
+                if (SweepShift != 0)
+                {
+                    CalculateNewFrequencyForSweep();
+                }
+            }
         }
 
         protected override void TickChannel()
         {
-            if (HasSweep)
-            {
-                // TODO
-            }
-
             TicksToNextFrequencyClock--;
 
             if (TicksToNextFrequencyClock == 0)
@@ -176,6 +209,45 @@ namespace GbSharp.Audio.Square
             }
 
             Sample = DutyCycles[DutyCycle][CurrentDutyCycleIdx];
+        }
+
+        protected override void ClockPreChannelTick()
+        {
+            base.ClockPreChannelTick();
+
+            if (!HasSweep)
+            {
+                return;
+            }
+
+            // Sweep
+            if (FrameSequencer == 2 || FrameSequencer == 6)
+            {
+                CurrentSweepPeriod--;
+
+                if (CurrentSweepPeriod == 0)
+                {
+                    CurrentSweepPeriod = SweepPeriod;
+
+                    // Quirk: a period of 0 is treated as 8
+                    if (SweepPeriod == 0)
+                    {
+                        CurrentSweepPeriod = 8;
+                    }
+
+                    if (SweepEnabled && SweepPeriod != 0)
+                    {
+                        uint frequency = CalculateNewFrequencyForSweep();
+                        if (Enabled && SweepShift != 0) // if still enabled, no overflow occurred
+                        {
+                            FrequencyShadowRegister = frequency;
+                            ResetFrequencyClocks(frequency);
+
+                            CalculateNewFrequencyForSweep();
+                        }
+                    }
+                }
+            }
         }
 
         protected override void ClockVolumeOrEnvelope()
