@@ -499,14 +499,23 @@ namespace GbSharp.Ppu
                             XCoord = OamRegion.ReadDirect(objectAddress + 1),
                             YCoord = objPixelY,
                             TileIdx = OamRegion.ReadDirect(objectAddress + 2),
-                            Attributes = OamRegion.ReadDirect(objectAddress + 3)
+                            Attributes = OamRegion.ReadDirect(objectAddress + 3),
+                            OamIdx = i
                         });
                     }
                 }
 
-                // TODO: CGB orders by first appearance in OAM
-                // TODO: reverse order of Take enumerable - otherwise sprites with higher X will take priority
-                foreach (GbObject obj in objectsToRender.OrderBy(obj => obj.XCoord).Take(10))
+                // Sort objects based on X-coordinate, using OAM index as a tiebreaker.
+                // Since only 10 objects are allowed at a time, we take the first 10 objects.
+                // The drawing order is reversed so objects with a lower X coordinate are drawn first
+                // and overlapped by objects with higher X coordinates.
+                // TODO: CGB uses OAM index only for sorting
+                IEnumerable<GbObject> sortedObjs = objectsToRender.GroupBy(o => o.XCoord).Select(g => g.OrderBy(o => o.OamIdx))
+                                                                  .Select(oe => oe.First())
+                                                                  .Take(10)
+                                                                  .Reverse();
+
+                foreach (GbObject obj in sortedObjs)
                 {
                     if (obj.XCoord == 0 || obj.XCoord >= 168)
                     {
