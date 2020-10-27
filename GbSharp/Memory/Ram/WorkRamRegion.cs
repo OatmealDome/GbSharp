@@ -31,7 +31,7 @@ namespace GbSharp.Memory
                 Banks.Add(new byte[BANK_SIZE]);
             }
 
-            memory.RegisterMmio(0xFF4D, () =>
+            memory.RegisterMmio(0xFF70, () =>
             {
                 return (byte)(CurrentSwitchableBank | 0xF8);
             }, (x) =>
