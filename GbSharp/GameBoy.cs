@@ -21,6 +21,8 @@ namespace GbSharp
         private readonly GbApu Apu;
         private readonly GbController Controller;
 
+        private HardwareType HardwareType;
+
         public delegate void NotifySamplesReady(float[] samples);
         public event NotifySamplesReady SamplesReady;
 
@@ -30,8 +32,9 @@ namespace GbSharp
         private int AddedAvgs = 0;
 #endif
 
-        public GameBoy()
+        public GameBoy(HardwareType type = HardwareType.AutoSelect)
         {
+            HardwareType = type;
             MemoryMap = new GbMemory();
             Cpu = new GbCpu(MemoryMap);
             Timer = new GbTimer(Cpu, MemoryMap);
@@ -106,6 +109,13 @@ namespace GbSharp
 
         public void LoadRom(byte[] rom, byte[] bootRom = null)
         {
+            CartridgeRomRegion romRegion = CartridgeRomRegion.CreateRomRegion(rom);
+
+            if (HardwareType == HardwareType.AutoSelect)
+            {
+                HardwareType = romRegion.GetBestSupportedHardware();
+            }
+
             if (bootRom != null)
             {
                 MemoryMap.RegisterBootRom(bootRom);
@@ -115,7 +125,7 @@ namespace GbSharp
                 Cpu.SetDefaultStateAfterBootRom();
             }
 
-            MemoryMap.RegisterRegion(CartridgeRomRegion.CreateRomRegion(rom));
+            MemoryMap.RegisterRegion(romRegion);
         }
 
         public void UpdateControllerKeyState(ControllerKey key, bool state)

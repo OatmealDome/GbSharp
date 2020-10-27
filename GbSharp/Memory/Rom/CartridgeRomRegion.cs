@@ -33,6 +33,19 @@ namespace GbSharp.Memory.Rom
             };
         }
 
+        public HardwareType GetBestSupportedHardware()
+        {
+            // TODO: autoselect between SGB and DMG
+
+            int cgbFlag = Rom[0x143];
+            if (cgbFlag == 0x80 || cgbFlag == 0xC0) // CGB-compatible or CGB-only
+            {
+                return HardwareType.Cgb;
+            }
+
+            return HardwareType.Dmg;
+        }
+
         protected int GetRamSize()
         {
             switch (Rom[0x149])
