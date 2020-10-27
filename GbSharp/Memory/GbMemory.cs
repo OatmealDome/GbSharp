@@ -64,7 +64,7 @@ namespace GbSharp.Memory
         {
             if (BootRomAccessible)
             {
-                if (MathUtil.InRange(address, 0x0, BootRomRegion.BOOT_ROM_SIZE))
+                if (MathUtil.InRange(address, 0x0, BootRomRegion.POTENTIAL_BOOT_ROM_SIZE))
                 {
                     return BootRomRegion.Read(address);
                 }
