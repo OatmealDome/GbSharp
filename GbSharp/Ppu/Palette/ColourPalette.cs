@@ -1,4 +1,4 @@
-﻿namespace GbSharp.Ppu.Palette
+namespace GbSharp.Ppu.Palette
 {
     class ColourPalette
     {
@@ -17,10 +17,10 @@
             Colours = new LcdColour[4];
 
             // Default to all white
-            Colours[0] = DmgColours[0];
-            Colours[1] = DmgColours[0];
-            Colours[2] = DmgColours[0];
-            Colours[3] = DmgColours[0];
+            Colours[0] = new LcdColour(255, 255, 255);
+            Colours[1] = new LcdColour(255, 255, 255);
+            Colours[2] = new LcdColour(255, 255, 255);
+            Colours[3] = new LcdColour(255, 255, 255);
         }
 
         public LcdColour GetColour(int idx)
