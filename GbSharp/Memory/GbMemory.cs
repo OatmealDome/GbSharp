@@ -76,7 +76,9 @@ namespace GbSharp.Memory
             }
             else
             {
+#if DEBUG
                 Console.WriteLine($"Invalid read to address {address:x}");
+#endif
                 return 0xFF;
             }
         }
@@ -89,7 +91,9 @@ namespace GbSharp.Memory
             }
             else
             {
+#if DEBUG
                 Console.WriteLine($"Invalid write to address {address:x}, value {val:x}");
+#endif
             }
         }
 
