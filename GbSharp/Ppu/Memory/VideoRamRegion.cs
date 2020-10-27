@@ -1,4 +1,4 @@
-using GbSharp.Memory;
+﻿using GbSharp.Memory;
 using System;
 using System.Collections.Generic;
 
@@ -73,14 +73,24 @@ namespace GbSharp.Ppu.Memory
             }
         }
 
-        public byte ReadDirect(int offset)
+        public byte ReadDirect(int offset, int bank = -1)
         {
-            return Banks[CurrentSwitchableBank][offset];
+            if (bank == -1)
+            {
+                bank = CurrentSwitchableBank;
+            }
+
+            return Banks[bank][offset];
         }
 
-        public void WriteDirect(int offset, byte val)
+        public void WriteDirect(int offset, byte val, int bank = -1)
         {
-            Banks[CurrentSwitchableBank][offset] = val;
+            if (bank == -1)
+            {
+                bank = CurrentSwitchableBank;
+            }
+
+            Banks[bank][offset] = val;
         }
 
     }
