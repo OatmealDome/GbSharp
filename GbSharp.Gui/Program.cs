@@ -80,6 +80,7 @@ namespace GbSharp.Gui
 
 #if DEBUG
             Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 #endif
 
             // Run emulation
