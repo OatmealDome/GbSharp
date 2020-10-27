@@ -72,7 +72,8 @@ namespace GbSharp.Memory
         {
             if (BootRomAccessible)
             {
-                if (MathUtil.InRange(address, 0x0, BootRomRegion.POTENTIAL_BOOT_ROM_SIZE))
+                // Check if in range of the boot ROM and not in the cartridge header
+                if (MathUtil.InRange(address, 0x0, BootRomRegion.POTENTIAL_BOOT_ROM_SIZE) && !MathUtil.InRange(address, 0x100, 0x100))
                 {
                     return BootRomRegion.Read(address);
                 }
