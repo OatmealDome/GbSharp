@@ -61,7 +61,7 @@ namespace GbSharp.Ppu
             CurrentMode = PpuMode.OamScan;
             CyclesLeftForOamDma = 0;
             SkipDrawingObjectsForScanline = false;
-            VideoRamRegion = new VideoRamRegion();
+            VideoRamRegion = new VideoRamRegion(memory);
             OamRegion = new OamRegion();
             RawOutput = new byte[160 * 144 * 4];
             PixelPriority = new int[160];

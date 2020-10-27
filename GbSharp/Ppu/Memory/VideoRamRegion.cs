@@ -1,4 +1,4 @@
-﻿using GbSharp.Memory;
+using GbSharp.Memory;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +13,7 @@ namespace GbSharp.Ppu.Memory
         private int CurrentSwitchableBank;
         private bool Locked;
 
-        public VideoRamRegion()
+        public VideoRamRegion(GbMemory memory)
         {
             Banks = new List<byte[]>()
             {
@@ -21,6 +21,18 @@ namespace GbSharp.Ppu.Memory
                 new byte[VIDEO_RAM_SIZE] // CGB
             };
             CurrentSwitchableBank = 0;
+
+            memory.RegisterMmio(0xFF4F, () =>
+            {
+                return (byte)CurrentSwitchableBank;
+            }, (x) =>
+            {
+                // ignore if not CGB
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    CurrentSwitchableBank = MathUtil.GetBit(x, 0);
+                }
+            });
         }
 
         public void Lock()
