@@ -112,6 +112,7 @@ namespace GbSharp
         {
             HardwareType = type;
 
+            MemoryMap.SetHardwareType(type);
             Cpu.SetHardwareType(type);
             Ppu.SetHardwareType(type);
         }

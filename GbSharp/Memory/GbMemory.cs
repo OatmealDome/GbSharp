@@ -60,6 +60,14 @@ namespace GbSharp.Memory
             BootRomAccessible = true;
         }
 
+        public void SetHardwareType(HardwareType type)
+        {
+            foreach (MemoryRegion region in MemoryMap.Values)
+            {
+                region.SetHardwareType(type);
+            }
+        }
+
         public byte Read(int address)
         {
             if (BootRomAccessible)
