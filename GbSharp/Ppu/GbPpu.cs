@@ -15,7 +15,9 @@ namespace GbSharp.Ppu
         private bool SkipDrawingObjectsForScanline;
         private VideoRamRegion VideoRamRegion;
         private OamRegion OamRegion;
+
         private byte[] RawOutput; // RGBA8_UNorm
+        private int[] PixelPriority; // Used for calculating if a pixel should be written
 
         private GbCpu Cpu;
         private GbMemory MemoryMap;
@@ -60,6 +62,7 @@ namespace GbSharp.Ppu
             VideoRamRegion = new VideoRamRegion();
             OamRegion = new OamRegion();
             RawOutput = new byte[160 * 144 * 4];
+            PixelPriority = new int[160];
 
             EnableLcd = false;
             UseAlternateWindowTileMap = false;
@@ -386,7 +389,7 @@ namespace GbSharp.Ppu
             SkipDrawingObjectsForScanline = false;
         }
 
-        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY, bool isObject = false, int objectPalette = 0)
+        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY, bool isObject = false, byte objAttributes = 0)
         {
             int dataOfs = 0;
             if (!isObject && !UseAlternateTileData)
@@ -404,19 +407,35 @@ namespace GbSharp.Ppu
 
             int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
 
-            if (isObject && colourIdx == 0)
-            {
-                return;
-            }
-
             ColourPalette palette;
             if (isObject)
             {
-                palette = ObjectPalettes[objectPalette];
+                // Colour 0 is used as transparancy for objects.
+                if (colourIdx == 0)
+                {
+                    return;
+                }
+
+                // If this priority bit is set, this pixel should only be drawn if
+                // the colour behind it is BG colours 1-3. BG colour 0 is always
+                // shown behind the object.
+                // TODO: exception case when two sprites overlap
+                if (MathUtil.IsBitSet(objAttributes, 7))
+                {
+                    if (PixelPriority[screenX] != 0)
+                    {
+                        return;
+                    }
+                }
+
+                palette = ObjectPalettes[MathUtil.GetBit(objAttributes, 4)];
             }
             else
             {
                 palette = BgPalettes[0];
+
+                // Write the BG colour as our priority
+                PixelPriority[screenX] = colourIdx;
             }
 
             int outputOfs = ((screenY * 160) + screenX) * 4;
@@ -545,7 +564,7 @@ namespace GbSharp.Ppu
                             objTargetPixelX = 7 - objTargetPixelX;
                         }
 
-                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, MathUtil.GetBit(obj.Attributes, 4));
+                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, obj.Attributes);
                     }
                 }
 
