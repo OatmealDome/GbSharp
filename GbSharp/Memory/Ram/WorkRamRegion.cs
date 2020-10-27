@@ -16,22 +16,38 @@ namespace GbSharp.Memory
         private static readonly int BANK_SIZE = 0x1000;
         private static readonly int ECHO_RAM_SIZE = 0x1E00;
 
-        private static readonly int DMG_BANK_COUNT = 2;
-        private static readonly int CGB_BANK_COUNT = 8;
+        private static readonly int MAX_BANK_COUNT = 8;
 
         private List<byte[]> Banks;
         private int CurrentSwitchableBank;
 
-        public WorkRamRegion()
+        public WorkRamRegion(GbMemory memory)
         {
             Banks = new List<byte[]>();
             CurrentSwitchableBank = 1;
 
-            // TODO: detect Game Boy Color and use CGB_BANK_COUNT if needed
-            for (int i = 0; i < DMG_BANK_COUNT; i++)
+            for (int i = 0; i < MAX_BANK_COUNT; i++)
             {
                 Banks.Add(new byte[BANK_SIZE]);
             }
+
+            memory.RegisterMmio(0xFF4D, () =>
+            {
+                return (byte)(CurrentSwitchableBank | 0xF8);
+            }, (x) =>
+            {
+                // Ignore writes on DMG
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    CurrentSwitchableBank = x & 0x7;
+
+                    // WRAM bank 0 is always at 0xC000
+                    if (CurrentSwitchableBank == 0)
+                    {
+                        CurrentSwitchableBank = 1;
+                    }
+                }
+            });
         }
 
         public override IEnumerable<Tuple<int, int>> GetHandledRanges()

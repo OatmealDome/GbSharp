@@ -30,7 +30,7 @@ namespace GbSharp.Memory
             MemoryMap = new Dictionary<int, MemoryRegion>();
             BootRomAccessible = false;
 
-            RegisterRegion(new WorkRamRegion());
+            RegisterRegion(new WorkRamRegion(this));
             RegisterRegion(new HighSpeedRamRegion());
 
             RegisterMmio(0xFF50, () => (byte)(BootRomAccessible ? 0 : 1), x => BootRomAccessible = false);
