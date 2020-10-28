@@ -2,22 +2,22 @@
 {
     class LcdColour
     {
-        public byte R
+        public int R
         {
             get;
-            private set;
+            set;
         }
 
-        public byte G
+        public int G
         {
             get;
-            private set;
+            set;
         }
 
-        public byte B
+        public int B
         {
             get;
-            private set;
+            set;
         }
 
         public LcdColour(byte r, byte g, byte b)

@@ -472,9 +472,9 @@ namespace GbSharp.Ppu
             int outputOfs = ((screenY * 160) + screenX) * 4;
 
             LcdColour colour = palette.GetColour(colourIdx);
-            RawOutput[outputOfs] = colour.R;
-            RawOutput[outputOfs + 1] = colour.G;
-            RawOutput[outputOfs + 2] = colour.B;
+            RawOutput[outputOfs] = (byte)colour.R;
+            RawOutput[outputOfs + 1] = (byte)colour.G;
+            RawOutput[outputOfs + 2] = (byte)colour.B;
 
             // Alpha should always be 255 (1.0f)
             RawOutput[outputOfs + 3] = 255;
