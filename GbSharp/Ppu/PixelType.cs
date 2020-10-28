@@ -4,6 +4,7 @@
     {
         BgColourZero,
         BgColourOther,
+        BgAlwaysOnTop,
         Object
     }
 }

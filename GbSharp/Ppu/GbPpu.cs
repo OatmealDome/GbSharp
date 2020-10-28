@@ -721,8 +721,10 @@ namespace GbSharp.Ppu
 
                 PixelType behindType = PixelPriority[screenX];
 
-                // Don't draw an object on top of another object
-                if (behindType == PixelType.Object)
+                // Don't draw an object on top of another object.
+                // Alternatively, don't draw a pixel at this position because the BG
+                // tile attribute indicates that it should always be on top.
+                if (behindType == PixelType.Object || behindType == PixelType.BgAlwaysOnTop)
                 {
                     return;
                 }
@@ -730,7 +732,6 @@ namespace GbSharp.Ppu
                 // If this priority bit is set, this pixel should only be drawn if
                 // the colour behind it is BG colour 0. BG colour 1-3 are always
                 // shown in front of the object.
-                // TODO: exception case when two sprites overlap
                 if (MathUtil.IsBitSet(attributes, 7))
                 {
                     if (behindType != PixelType.BgColourZero)
@@ -764,8 +765,16 @@ namespace GbSharp.Ppu
                     palette = BgPalettes[0];
                 }
 
-                // Write the BG colour as our priority
-                PixelPriority[screenX] = colourIdx == 0 ? PixelType.BgColourZero : PixelType.BgColourOther;
+                if (HardwareType == HardwareType.Cgb && MathUtil.IsBitSet(attributes, 7))
+                {
+                    // Bit 7 of the BG tile attribute indicates this tile should always be on top
+                    PixelPriority[screenX] = PixelType.BgAlwaysOnTop;
+                }
+                else
+                {
+                    // Write the BG colour as our priority
+                    PixelPriority[screenX] = colourIdx == 0 ? PixelType.BgColourZero : PixelType.BgColourOther;
+                }
             }
 
             int outputOfs = ((screenY * 160) + screenX) * 4;
