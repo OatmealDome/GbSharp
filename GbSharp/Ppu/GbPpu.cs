@@ -722,21 +722,32 @@ namespace GbSharp.Ppu
                 PixelType behindType = PixelPriority[screenX];
 
                 // Don't draw an object on top of another object.
-                // Alternatively, don't draw a pixel at this position because the BG
-                // tile attribute indicates that it should always be on top.
-                if (behindType == PixelType.Object || behindType == PixelType.BgAlwaysOnTop)
+                if (behindType == PixelType.Object)
                 {
                     return;
                 }
 
-                // If this priority bit is set, this pixel should only be drawn if
-                // the colour behind it is BG colour 0. BG colour 1-3 are always
-                // shown in front of the object.
-                if (MathUtil.IsBitSet(attributes, 7))
+                // If the BG/Window master priority flag is cleared, objects are always
+                // drawn on top of the background, regardless of what the OAM or BG tile
+                // map attributes say about BG/Window priority.
+                if (HardwareType == HardwareType.Cgb && BgAndWindowEnabledOrPriority)
                 {
-                    if (behindType != PixelType.BgColourZero)
+                    // Don't draw a pixel at this position if the BG tile attribute
+                    // indicates that it should always be on top.
+                    if (behindType == PixelType.BgAlwaysOnTop)
                     {
                         return;
+                    }
+
+                    // If this priority bit is set, this pixel should only be drawn if
+                    // the colour behind it is BG colour 0. BG colour 1-3 are always
+                    // shown in front of the object.
+                    if (MathUtil.IsBitSet(attributes, 7))
+                    {
+                        if (behindType != PixelType.BgColourZero)
+                        {
+                            return;
+                        }
                     }
                 }
 
