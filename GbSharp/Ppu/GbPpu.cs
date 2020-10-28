@@ -67,6 +67,9 @@ namespace GbSharp.Ppu
         private int VramDmaSource;
         private int VramDmaDestination;
 
+        // LCD Object Priority Compatibility
+        private bool ObjectSortingDmgCompatibility;
+
         public GbPpu(GbCpu cpu, GbMemory memory)
         {
             CurrentScanlineCyclePosition = 0;
@@ -108,6 +111,8 @@ namespace GbSharp.Ppu
             OamDmaStart = 0;
             VramDmaSource = 0;
             VramDmaDestination = 0;
+
+            ObjectSortingDmgCompatibility = false;
 
             Cpu = cpu;
             MemoryMap = memory;
@@ -496,6 +501,30 @@ namespace GbSharp.Ppu
                 }
             });
 
+            MemoryMap.RegisterMmio(0xFF6C, () =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    byte b = 0xFE;
+
+                    if (ObjectSortingDmgCompatibility)
+                    {
+                        MathUtil.SetBit(ref b, 0);
+                    }
+
+                    return b;
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    ObjectSortingDmgCompatibility = MathUtil.IsBitSet(x, 0);
+                }
+            });
         }
 
         /// <summary>
@@ -850,7 +879,7 @@ namespace GbSharp.Ppu
 
                 IEnumerable<GbObject> sortedObjs;
 
-                if (HardwareType == HardwareType.Dmg)
+                if (HardwareType == HardwareType.Dmg || ObjectSortingDmgCompatibility)
                 {
                     // Sort objects based on X-coordinate, using OAM index as a tiebreaker.
                     sortedObjs = objectsToRender.GroupBy(o => o.XCoord).SelectMany(g => g.OrderBy(o => o.OamIdx));
