@@ -53,6 +53,13 @@ namespace GbSharp
 
             int cycles = 0;
 
+            int targetCycles = 17564;
+
+            if (Cpu.GetIsDoubleSpeed())
+            {
+                targetCycles *= 2;
+            }
+
             // At 1,048,576 M-cycles/s and 59.7 frames/s, the Game Boy runs approx
             // 17,564.087 M-cycles per second. Here, this number is rounded to the
             // nearest whole number, so the emulator will be very slightly slower
@@ -61,9 +68,19 @@ namespace GbSharp
             {
                 int lastCpuCycles = Cpu.Step();
 
-                Timer.Tick(lastCpuCycles);
+                // In CPU double speed, the timer ticks twice as fast
+                Timer.Tick(Cpu.GetIsDoubleSpeed() ? lastCpuCycles * 2 : lastCpuCycles);
 
-                for (int i = 0; i < (lastCpuCycles * 4); i++)
+                // Convert to T-Cycles
+                int tCycles = lastCpuCycles * 4;
+
+                // Divide if in double speed
+                if (Cpu.GetIsDoubleSpeed())
+                {
+                    tCycles /= 2;
+                }
+
+                for (int i = 0; i < tCycles; i++)
                 {
                     Ppu.Update();
                     

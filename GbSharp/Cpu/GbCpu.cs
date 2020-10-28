@@ -13,8 +13,12 @@ namespace GbSharp.Cpu
         private readonly RegisterPair DE;
         private readonly RegisterPair HL;
 
+        private bool IsDoubleSpeed;
+        private bool ShouldSwitchToDoubleSpeed;
+
         private bool Halted;
         private bool HaltBug;
+        private bool Stopped;
 
         private bool InterruptsEnabled;
         private bool InterruptsWillBeEnabled; // EI is delayed by one instruction
@@ -36,8 +40,11 @@ namespace GbSharp.Cpu
             DE = new RegisterPair();
             HL = new RegisterPair();
 
+            IsDoubleSpeed = false;
+
             Halted = false;
             HaltBug = false;
+            Stopped = false;
 
             InterruptsEnabled = false;
             InterruptsWillBeEnabled = false;
@@ -46,9 +53,31 @@ namespace GbSharp.Cpu
 
             MemoryMap = memory;
 
-            // Register MMIO
+            // Interrupts
             MemoryMap.RegisterMmio(0xFFFF, () => EnabledInterrupts, x => EnabledInterrupts = x);
             MemoryMap.RegisterMmio(0xFF0F, () => RaisedInterrupts, x => RaisedInterrupts = x);
+
+            // CGB Double Speed
+            MemoryMap.RegisterMmio(0xFF4D, () =>
+            {
+                byte b = 0x7E; // middle bits unused
+
+                if (IsDoubleSpeed)
+                {
+                    MathUtil.SetBit(ref b, 7);
+                }
+
+                if (ShouldSwitchToDoubleSpeed)
+                {
+                    MathUtil.SetBit(ref b, 0);
+                }
+
+                return b;
+            }, x =>
+            {
+                // Only bit 0 can be written to
+                ShouldSwitchToDoubleSpeed = MathUtil.IsBitSet(x, 0);
+            });
         }
 
         public int Step()
@@ -70,6 +99,7 @@ namespace GbSharp.Cpu
                             MathUtil.ClearBit(ref RaisedInterrupts, i);
 
                             Halted = false;
+                            Stopped = false;
                             InterruptsEnabled = false;
 
                             // Interrupt handling takes 4 M-cycles:
@@ -94,6 +124,11 @@ namespace GbSharp.Cpu
 
                 cycles = 1;
             }
+            else if (Stopped)
+            {
+                // No CPU execution while stopped
+                return 0;
+            }
             else
             {
                 cycles += ExecuteInstruction();
@@ -111,6 +146,11 @@ namespace GbSharp.Cpu
         public void SetHardwareType(HardwareType type)
         {
             HardwareType = type;
+        }
+
+        public bool GetIsDoubleSpeed()
+        {
+            return IsDoubleSpeed;
         }
 
         /// <summary>
@@ -1031,6 +1071,31 @@ namespace GbSharp.Cpu
             {
                 Halted = true;
             }
+
+            return 1;
+        }
+
+        /// <summary>
+        /// STOP
+        /// </summary>
+        /// <returns>The number of CPU cycles to execute this instruction.</returns>
+        private int Stop()
+        {
+            // Unused byte?
+            AdvancePC();
+
+            if (ShouldSwitchToDoubleSpeed)
+            {
+                ShouldSwitchToDoubleSpeed = false;
+                IsDoubleSpeed = true;
+            }
+            else
+            {
+                Stopped = true;
+            }
+
+            // Unused byte?
+            AdvancePC();
 
             return 1;
         }
