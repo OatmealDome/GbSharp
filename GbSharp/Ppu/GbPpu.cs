@@ -36,7 +36,7 @@ namespace GbSharp.Ppu
         private bool UseAlternateBgTileMap;
         private bool UseDoubleHeightObjectSize;
         private bool EnableObjects;
-        private bool PrioritizeBgAndWindow;
+        private bool BgAndWindowEnabledOrPriority;
 
         // LCD Status (0xFF41)
         private bool CoincidenceInterruptEnabled;
@@ -89,7 +89,7 @@ namespace GbSharp.Ppu
             UseAlternateBgTileMap = false;
             UseDoubleHeightObjectSize = false;
             EnableObjects = false;
-            PrioritizeBgAndWindow = false;
+            BgAndWindowEnabledOrPriority = false;
 
             BgScrollX = 0;
             BgScrollY = 0;
@@ -162,7 +162,7 @@ namespace GbSharp.Ppu
                     MathUtil.SetBit(ref b, 1);
                 }
 
-                if (PrioritizeBgAndWindow)
+                if (BgAndWindowEnabledOrPriority)
                 {
                     MathUtil.SetBit(ref b, 0);
                 }
@@ -177,7 +177,7 @@ namespace GbSharp.Ppu
                 UseAlternateBgTileMap = MathUtil.IsBitSet(x, 3);
                 UseDoubleHeightObjectSize = MathUtil.IsBitSet(x, 2);
                 EnableObjects = MathUtil.IsBitSet(x, 1);
-                PrioritizeBgAndWindow = MathUtil.IsBitSet(x, 0);
+                BgAndWindowEnabledOrPriority = MathUtil.IsBitSet(x, 0);
 
                 if (!EnableLcd)
                 {
@@ -754,7 +754,8 @@ namespace GbSharp.Ppu
 
         private void DrawScanline()
         {
-            if (PrioritizeBgAndWindow)
+            // The BG/Window flag is used for other purposes on CGB, so it's OK if it isn't set
+            if (HardwareType == HardwareType.Cgb || BgAndWindowEnabledOrPriority)
             {
                 int bgTileMapOfs = UseAlternateBgTileMap ? 0x1c00 : 0x1800;
                 int windowTileMapOfs = UseAlternateWindowTileMap ? 0x1c00 : 0x1800;
