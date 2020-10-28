@@ -13,6 +13,10 @@ namespace GbSharp.Ppu
         private PpuMode CurrentMode;
         private int CyclesLeftForOamDma;
         private bool SkipDrawingObjectsForScanline;
+        private bool HBlankDmaActive;
+        private int BytesLeftInHBlankDma;
+        private int HBlankDmaSourcePointer;
+        private int HBlankDmaDestinationPointer;
         private VideoRamRegion VideoRamRegion;
         private OamRegion OamRegion;
 
@@ -55,12 +59,20 @@ namespace GbSharp.Ppu
         // LCD OAM DMA
         private byte OamDmaStart;
 
+        // LCD VRAM DMA
+        private int VramDmaSource;
+        private int VramDmaDestination;
+
         public GbPpu(GbCpu cpu, GbMemory memory)
         {
             CurrentScanlineCyclePosition = 0;
             CurrentMode = PpuMode.OamScan;
             CyclesLeftForOamDma = 0;
             SkipDrawingObjectsForScanline = false;
+            HBlankDmaActive = false;
+            BytesLeftInHBlankDma = 0;
+            HBlankDmaSourcePointer = 0;
+            HBlankDmaDestinationPointer = 0;
             VideoRamRegion = new VideoRamRegion(memory);
             OamRegion = new OamRegion();
             RawOutput = new byte[160 * 144 * 4];
@@ -84,6 +96,10 @@ namespace GbSharp.Ppu
 
             BgPalettes = new List<ColourPalette>();
             ObjectPalettes = new List<ColourPalette>();
+
+            OamDmaStart = 0;
+            VramDmaSource = 0;
+            VramDmaDestination = 0;
 
             Cpu = cpu;
             MemoryMap = memory;
@@ -280,6 +296,100 @@ namespace GbSharp.Ppu
                 OamDmaStart = x;
                 CyclesLeftForOamDma = 160;
             });
+
+            MemoryMap.RegisterMmio(0xFF51, () =>
+            {
+                return (byte)(VramDmaSource & 0xFF);
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    VramDmaSource = (VramDmaSource & 0xFF) | (x << 8); 
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF52, () =>
+            {
+                return (byte)(VramDmaDestination & 0xFF);
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    VramDmaDestination = (VramDmaDestination & 0xFF00) | (x & 0xF0); // lower 4 bytes ignored
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF53, () =>
+            {
+                return (byte)(VramDmaDestination & 0xFF00);
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    VramDmaDestination = (VramDmaDestination & 0xFF) | ((x & 0x1F) << 8); // upper 3 bytes ignored
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF54, () =>
+            {
+                return (byte)(VramDmaDestination & 0xFF);
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    VramDmaDestination = (VramDmaDestination & 0xFF00) | (x & 0xF0); // lower 4 bytes ignored
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF55, () =>
+            {
+                if (HBlankDmaActive || BytesLeftInHBlankDma != 0)
+                {
+                    byte b = 0x80; // bit 7 always set
+
+                    b |= (byte)((BytesLeftInHBlankDma / 0x10) - 0x1);
+
+                    return b;
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, (x) =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    int length = ((x & 0x7F) + 0x1) * 0x10; // lower 7 bits
+
+                    if (MathUtil.IsBitSet(x, 7)) // H-Blank DMA
+                    {
+                        HBlankDmaActive = true;
+                        BytesLeftInHBlankDma = length;
+                        HBlankDmaSourcePointer = VramDmaSource;
+                        HBlankDmaDestinationPointer = VramDmaDestination;
+                    }
+                    else
+                    {
+                        if (HBlankDmaActive)
+                        {
+                            HBlankDmaActive = false;
+                        }
+                        else
+                        {
+                            HBlankDmaActive = false;
+                            BytesLeftInHBlankDma = 0;
+
+                            // Perform the DMA now
+                            for (int i = 0; i < length; i++)
+                            {
+                                byte val = MemoryMap.Read(VramDmaSource + i);
+                                VideoRamRegion.WriteDirect(VramDmaDestination + i, val);
+                            }
+                        }
+                    }
+                }
+            });
+
         }
 
         /// <summary>
@@ -385,6 +495,27 @@ namespace GbSharp.Ppu
                 case PpuMode.HBlank:
                     OamRegion.Unlock();
                     VideoRamRegion.Unlock();
+
+                    if (HBlankDmaActive)
+                    {
+                        // Perform any VRAM DMA now
+                        int correctedLength = BytesLeftInHBlankDma > 0x10 ? 0x10 : BytesLeftInHBlankDma;
+
+                        for (int i = 0; i < correctedLength; i++)
+                        {
+                            byte val = MemoryMap.Read(HBlankDmaSourcePointer + i);
+                            VideoRamRegion.WriteDirect(HBlankDmaDestinationPointer + i, val);
+                        }
+
+                        HBlankDmaSourcePointer += correctedLength;
+                        HBlankDmaDestinationPointer += correctedLength;
+                        BytesLeftInHBlankDma -= correctedLength;
+
+                        if (BytesLeftInHBlankDma == 0)
+                        {
+                            HBlankDmaActive = false;
+                        }
+                    }
 
                     DrawScanline();
 
