@@ -851,8 +851,7 @@ namespace GbSharp.Ppu
                 // Sort objects based on X-coordinate, using OAM index as a tiebreaker.
                 // Since only 10 objects are allowed at a time, we take the first 10 objects.
                 // TODO: CGB uses OAM index only for sorting
-                IEnumerable<GbObject> sortedObjs = objectsToRender.GroupBy(o => o.XCoord).Select(g => g.OrderBy(o => o.OamIdx))
-                                                                  .Select(oe => oe.First())
+                IEnumerable<GbObject> sortedObjs = objectsToRender.GroupBy(o => o.XCoord).SelectMany(g => g.OrderBy(o => o.OamIdx))
                                                                   .Take(10);
 
                 foreach (GbObject obj in sortedObjs)
