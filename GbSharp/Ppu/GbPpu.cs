@@ -657,7 +657,7 @@ namespace GbSharp.Ppu
             SkipDrawingObjectsForScanline = false;
         }
 
-        private void DrawTilePixel(int screenX, int screenY, int tileIdx, int tilePixelX, int tilePixelY, bool isObject = false, byte objAttributes = 0)
+        private void DrawTilePixel(int screenX, int screenY, int tileIdx, byte attributes, int tilePixelX, int tilePixelY, bool isObject = false)
         {
             int dataOfs = 0;
             if (!isObject && !UseAlternateTileData)
@@ -670,8 +670,14 @@ namespace GbSharp.Ppu
 
             int dataStartOfs = dataOfs + (tileIdx * 16) + (tilePixelY * 2);
 
-            byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs);
-            byte tileHigh = VideoRamRegion.ReadDirect(dataStartOfs + 1);
+            int bank = 0;
+            if (HardwareType == HardwareType.Cgb)
+            {
+                bank = MathUtil.GetBit(attributes, 3);
+            }
+
+            byte tileLow = VideoRamRegion.ReadDirect(dataStartOfs, bank);
+            byte tileHigh = VideoRamRegion.ReadDirect(dataStartOfs + 1, bank);
 
             int colourIdx = (MathUtil.GetBit(tileHigh, 7 - tilePixelX) << 1) | MathUtil.GetBit(tileLow, 7 - tilePixelX);
 
@@ -688,7 +694,7 @@ namespace GbSharp.Ppu
                 // the colour behind it is BG colours 1-3. BG colour 0 is always
                 // shown behind the object.
                 // TODO: exception case when two sprites overlap
-                if (MathUtil.IsBitSet(objAttributes, 7))
+                if (MathUtil.IsBitSet(attributes, 7))
                 {
                     if (PixelPriority[screenX] != 0)
                     {
@@ -696,11 +702,28 @@ namespace GbSharp.Ppu
                     }
                 }
 
-                palette = ObjectPalettes[MathUtil.GetBit(objAttributes, 4)];
+                int paletteIdx;
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    paletteIdx = attributes & 0x7;
+                }
+                else
+                {
+                    paletteIdx = MathUtil.GetBit(attributes, 4);
+                }
+
+                palette = ObjectPalettes[paletteIdx];
             }
             else
             {
-                palette = BgPalettes[0];
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    palette = BgPalettes[attributes & 0x7];
+                }
+                else
+                {
+                    palette = BgPalettes[0];
+                }
 
                 // Write the BG colour as our priority
                 PixelPriority[screenX] = colourIdx;
@@ -708,10 +731,22 @@ namespace GbSharp.Ppu
 
             int outputOfs = ((screenY * 160) + screenX) * 4;
 
+            byte ToScreenColour(int colour)
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    return (byte)((colour / 31.0f) * 255.0f);
+                }
+                else
+                {
+                    return (byte)colour;
+                }
+            }
+
             LcdColour colour = palette.GetColour(colourIdx);
-            RawOutput[outputOfs] = (byte)colour.R;
-            RawOutput[outputOfs + 1] = (byte)colour.G;
-            RawOutput[outputOfs + 2] = (byte)colour.B;
+            RawOutput[outputOfs] = ToScreenColour(colour.R);
+            RawOutput[outputOfs + 1] = ToScreenColour(colour.G);
+            RawOutput[outputOfs + 2] = ToScreenColour(colour.B);
 
             // Alpha should always be 255 (1.0f)
             RawOutput[outputOfs + 3] = 255;
@@ -733,9 +768,9 @@ namespace GbSharp.Ppu
 
                 for (byte x = 0; x < 160; x++)
                 {
-                    byte tileIdx;
                     int tilePixelX;
                     int tilePixelY;
+                    int tileAddress;
 
                     if (windowChecking && x >= realWindowX)
                     {
@@ -747,20 +782,30 @@ namespace GbSharp.Ppu
                         int windowTileX = windowPixelX / 8;
                         tilePixelX = windowPixelX % 8;
 
-                        tileIdx = VideoRamRegion.ReadDirect(windowTileMapOfs + (windowTileY * 32) + windowTileX);
+                        tileAddress = windowTileMapOfs + (windowTileY * 32) + windowTileX;
                     }
                     else
                     {
                         tilePixelY = bgTilePixelY;
 
-                    byte bgPixelX = (byte)(x + BgScrollX);
-                    int bgTileX = bgPixelX / 8;
+                        byte bgPixelX = (byte)(x + BgScrollX);
+                        int bgTileX = bgPixelX / 8;
                         tilePixelX = bgPixelX % 8;
 
-                        tileIdx = VideoRamRegion.ReadDirect(bgTileMapOfs + (bgTileY * 32) + bgTileX);
-                }
+                        tileAddress = bgTileMapOfs + (bgTileY * 32) + bgTileX;
+                    }
 
-                    DrawTilePixel(x, CurrentScanline, tileIdx, tilePixelX, tilePixelY);
+                    // Tile map is always in bank 0
+                    byte tileIdx = VideoRamRegion.ReadDirect(tileAddress, 0);
+
+                    byte attributes = 0;
+                    if (HardwareType == HardwareType.Cgb)
+                    {
+                        // Attributes are always stored in bank 1
+                        attributes = VideoRamRegion.ReadDirect(tileAddress, 1);
+                    }
+
+                    DrawTilePixel(x, CurrentScanline, tileIdx, attributes, tilePixelX, tilePixelY);
                 }
             }
 
@@ -832,7 +877,7 @@ namespace GbSharp.Ppu
                             objTargetPixelX = 7 - objTargetPixelX;
                         }
 
-                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, objTargetPixelX, objTargetPixelY, true, obj.Attributes);
+                        DrawTilePixel(x, CurrentScanline, obj.TileIdx, obj.Attributes, objTargetPixelX, objTargetPixelY, true);
                     }
                 }
 
