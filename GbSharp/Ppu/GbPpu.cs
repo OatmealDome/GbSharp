@@ -259,35 +259,26 @@ namespace GbSharp.Ppu
             // DMG Palette registers
             MemoryMap.RegisterMmio(0xFF47, () =>
             {
-                return HardwareType == HardwareType.Dmg ? BgPalettes[0].GetDmgRegister() : (byte)0xFF;
+                return BgPalettes[0].GetDmgRegister();
             }, x =>
             {
-                if (HardwareType == HardwareType.Dmg)
-                {
-                    BgPalettes[0].SetFromDmgRegister(x);
-                }
+                BgPalettes[0].SetFromDmgRegister(x, HardwareType == HardwareType.Cgb);
             });
 
             MemoryMap.RegisterMmio(0xFF48, () =>
             {
-                return HardwareType == HardwareType.Dmg ? ObjectPalettes[0].GetDmgRegister() : (byte)0xFF;
+                return ObjectPalettes[0].GetDmgRegister();
             }, x =>
             {
-                if (HardwareType == HardwareType.Dmg)
-                {
-                    ObjectPalettes[0].SetFromDmgRegister(x);
-                }
+                ObjectPalettes[0].SetFromDmgRegister(x, HardwareType == HardwareType.Cgb);
             });
 
             MemoryMap.RegisterMmio(0xFF49, () =>
             {
-                return HardwareType == HardwareType.Dmg ? ObjectPalettes[1].GetDmgRegister() : (byte)0xFF;
+                return ObjectPalettes[1].GetDmgRegister();
             }, x =>
             {
-                if (HardwareType == HardwareType.Dmg)
-                {
-                    ObjectPalettes[1].SetFromDmgRegister(x);
-                }
+                ObjectPalettes[1].SetFromDmgRegister(x, HardwareType == HardwareType.Cgb);
             });
 
             // TODO: Initiating an OAM DMA transfer will lock out all memory except HRAM

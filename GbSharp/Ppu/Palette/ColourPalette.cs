@@ -11,6 +11,7 @@ namespace GbSharp.Ppu.Palette
         };
 
         private LcdColour[] Colours;
+        private byte DmgRegisterValue;
 
         public ColourPalette()
         {
@@ -33,39 +34,25 @@ namespace GbSharp.Ppu.Palette
             Colours[idx] = colour;
         }
 
-        public void SetFromDmgRegister(byte register)
+        public void SetFromDmgRegister(byte register, bool isCgb)
         {
-            Colours[0] = DmgColours[register & 0x3];
-            Colours[1] = DmgColours[(register >> 2) & 0x3];
-            Colours[2] = DmgColours[(register >> 4) & 0x3];
-            Colours[3] = DmgColours[register >> 6];
+            // Don't actually set any colours if the register is being written to in CGB mode.
+            // The CGB Pokemon games read this register's value later in order to upload the
+            // equivalent colours to CGB palette memory.
+            if (!isCgb)
+            {
+                Colours[0] = DmgColours[register & 0x3];
+                Colours[1] = DmgColours[(register >> 2) & 0x3];
+                Colours[2] = DmgColours[(register >> 4) & 0x3];
+                Colours[3] = DmgColours[register >> 6];
+            }
+
+            DmgRegisterValue = register;
         }
 
         public byte GetDmgRegister()
         {
-            int getColorIdx(LcdColour colour)
-            {
-                if (colour == DmgColours[0])
-                {
-                    return 0;
-                }
-                else if (colour == DmgColours[1])
-                {
-                    return 1;
-                }
-                else if (colour == DmgColours[2])
-                {
-                    return 2;
-                }
-                else if (colour == DmgColours[3])
-                {
-                    return 3;
-                }
-
-                return 0;
-            }
-
-            return (byte)(getColorIdx(Colours[3]) << 6 | getColorIdx(Colours[2]) << 4 | getColorIdx(Colours[1]) << 2 | getColorIdx(Colours[0]));
+            return DmgRegisterValue;
         }
 
     }
