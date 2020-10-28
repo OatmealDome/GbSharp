@@ -21,7 +21,7 @@ namespace GbSharp.Ppu
         private OamRegion OamRegion;
 
         private byte[] RawOutput; // RGBA8_UNorm
-        private int[] PixelPriority; // Used for calculating if a pixel should be written
+        private PixelType[] PixelPriority; // Used for calculating if a pixel should be written
 
         private GbCpu Cpu;
         private GbMemory MemoryMap;
@@ -80,7 +80,7 @@ namespace GbSharp.Ppu
             VideoRamRegion = new VideoRamRegion(memory);
             OamRegion = new OamRegion();
             RawOutput = new byte[160 * 144 * 4];
-            PixelPriority = new int[160];
+            PixelPriority = new PixelType[160];
 
             EnableLcd = false;
             UseAlternateWindowTileMap = false;
@@ -696,7 +696,7 @@ namespace GbSharp.Ppu
                 // TODO: exception case when two sprites overlap
                 if (MathUtil.IsBitSet(attributes, 7))
                 {
-                    if (PixelPriority[screenX] != 0)
+                    if (PixelPriority[screenX] != PixelType.BgColourZero)
                     {
                         return;
                     }
@@ -726,7 +726,7 @@ namespace GbSharp.Ppu
                 }
 
                 // Write the BG colour as our priority
-                PixelPriority[screenX] = colourIdx;
+                PixelPriority[screenX] = colourIdx == 0 ? PixelType.BgColourZero : PixelType.BgColourOther;
             }
 
             int outputOfs = ((screenY * 160) + screenX) * 4;
