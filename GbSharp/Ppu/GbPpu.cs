@@ -691,8 +691,8 @@ namespace GbSharp.Ppu
                 }
 
                 // If this priority bit is set, this pixel should only be drawn if
-                // the colour behind it is BG colours 1-3. BG colour 0 is always
-                // shown behind the object.
+                // the colour behind it is BG colour 0. BG colour 1-3 are always
+                // shown in front of the object.
                 // TODO: exception case when two sprites overlap
                 if (MathUtil.IsBitSet(attributes, 7))
                 {
