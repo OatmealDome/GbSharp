@@ -690,13 +690,21 @@ namespace GbSharp.Ppu
                     return;
                 }
 
+                PixelType behindType = PixelPriority[screenX];
+
+                // Don't draw an object on top of another object
+                if (behindType == PixelType.Object)
+                {
+                    return;
+                }
+
                 // If this priority bit is set, this pixel should only be drawn if
                 // the colour behind it is BG colour 0. BG colour 1-3 are always
                 // shown in front of the object.
                 // TODO: exception case when two sprites overlap
                 if (MathUtil.IsBitSet(attributes, 7))
                 {
-                    if (PixelPriority[screenX] != PixelType.BgColourZero)
+                    if (behindType != PixelType.BgColourZero)
                     {
                         return;
                     }
@@ -713,6 +721,8 @@ namespace GbSharp.Ppu
                 }
 
                 palette = ObjectPalettes[paletteIdx];
+
+                PixelPriority[screenX] = PixelType.Object;
             }
             else
             {
@@ -840,13 +850,10 @@ namespace GbSharp.Ppu
 
                 // Sort objects based on X-coordinate, using OAM index as a tiebreaker.
                 // Since only 10 objects are allowed at a time, we take the first 10 objects.
-                // The drawing order is reversed so objects with a lower X coordinate are drawn first
-                // and overlapped by objects with higher X coordinates.
                 // TODO: CGB uses OAM index only for sorting
                 IEnumerable<GbObject> sortedObjs = objectsToRender.GroupBy(o => o.XCoord).Select(g => g.OrderBy(o => o.OamIdx))
                                                                   .Select(oe => oe.First())
-                                                                  .Take(10)
-                                                                  .Reverse();
+                                                                  .Take(10);
 
                 foreach (GbObject obj in sortedObjs)
                 {

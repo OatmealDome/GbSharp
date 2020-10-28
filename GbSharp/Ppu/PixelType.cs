@@ -4,6 +4,6 @@
     {
         BgColourZero,
         BgColourOther,
-        Sprite
+        Object
     }
 }
