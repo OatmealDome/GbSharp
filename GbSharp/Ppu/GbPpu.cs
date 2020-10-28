@@ -55,6 +55,10 @@ namespace GbSharp.Ppu
         // LCD Palettes
         private List<ColourPalette> BgPalettes;
         private List<ColourPalette> ObjectPalettes;
+        private int BgPaletteWriteSpecification;
+        private bool BgPaletteTransferAutoIncrement;
+        private int ObjectPaletteWriteSpecification;
+        private bool ObjectPaletteTransferAutoIncrement;
 
         // LCD OAM DMA
         private byte OamDmaStart;
@@ -96,6 +100,10 @@ namespace GbSharp.Ppu
 
             BgPalettes = new List<ColourPalette>();
             ObjectPalettes = new List<ColourPalette>();
+            BgPaletteWriteSpecification = 0;
+            BgPaletteTransferAutoIncrement = false;
+            ObjectPaletteWriteSpecification = 0;
+            ObjectPaletteTransferAutoIncrement = false;
 
             OamDmaStart = 0;
             VramDmaSource = 0;
@@ -279,6 +287,113 @@ namespace GbSharp.Ppu
             }, x =>
             {
                 ObjectPalettes[1].SetFromDmgRegister(x, HardwareType == HardwareType.Cgb);
+            });
+
+            // CGB Palette Transfer
+            MemoryMap.RegisterMmio(0xFF68, () =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    byte b = 0x40; // unused 6th bit always set
+                    
+                    b |= (byte)BgPaletteWriteSpecification;
+
+                    if (BgPaletteTransferAutoIncrement)
+                    {
+                        MathUtil.SetBit(ref b, 7);
+                    }
+
+                    return b;
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, x =>
+            {
+                // Writes ignored for DMG hardware
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    BgPaletteWriteSpecification = x & 0x3F;
+                    BgPaletteTransferAutoIncrement = MathUtil.IsBitSet(x, 7);
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF69, () =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    return GetPaletteData(BgPalettes, BgPaletteWriteSpecification);
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, (x) =>
+            {
+                // Writes ignored for DMG hardware
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    UpdatePalette(BgPalettes, BgPaletteWriteSpecification, x);
+
+                    if (BgPaletteTransferAutoIncrement)
+                    {
+                        BgPaletteWriteSpecification++;
+                    }
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF6A, () =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    byte b = 0x40; // unused 6th bit always set
+
+                    b |= (byte)ObjectPaletteWriteSpecification;
+
+                    if (ObjectPaletteTransferAutoIncrement)
+                    {
+                        MathUtil.SetBit(ref b, 7);
+                    }
+
+                    return b;
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, (x) =>
+            {
+                // Writes ignored for DMG hardware
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    ObjectPaletteWriteSpecification = x & 0x3F;
+                    ObjectPaletteTransferAutoIncrement = MathUtil.IsBitSet(x, 7);
+                }
+            });
+
+            MemoryMap.RegisterMmio(0xFF6B, () =>
+            {
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    return GetPaletteData(ObjectPalettes, ObjectPaletteWriteSpecification);
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }, (x) =>
+            {
+                // Writes ignored for DMG hardware
+                if (HardwareType == HardwareType.Cgb)
+                {
+                    UpdatePalette(ObjectPalettes, ObjectPaletteWriteSpecification, x);
+
+                    if (ObjectPaletteTransferAutoIncrement)
+                    {
+                        ObjectPaletteWriteSpecification++;
+                    }
+                }
             });
 
             // TODO: Initiating an OAM DMA transfer will lock out all memory except HRAM
@@ -721,6 +836,45 @@ namespace GbSharp.Ppu
                     }
                 }
 
+            }
+        }
+
+        private byte GetPaletteData(List<ColourPalette> palettes, int writeSpecification)
+        {
+            byte b = 0;
+
+            ColourPalette palette = palettes[writeSpecification >> 3];
+            LcdColour colour = palette.GetColour((writeSpecification >> 1) & 0x3);
+
+            if (MathUtil.IsBitSet((byte)writeSpecification, 0))
+            {
+                b |= 0x80; // high bit unused
+                b |= (byte)(colour.B << 2);
+                b |= (byte)(colour.G >> 3);
+            }
+            else
+            {
+                b |= (byte)((colour.G & 0x7) << 5);
+                b |= (byte)colour.R;
+            }
+
+            return b;
+        }
+
+        private void UpdatePalette(List<ColourPalette> palettes, int writeSpecification, byte value)
+        {
+            ColourPalette palette = palettes[writeSpecification >> 3];
+            LcdColour colour = palette.GetColour((writeSpecification >> 1) & 0x3);
+
+            if (MathUtil.IsBitSet((byte)writeSpecification, 0))
+            {
+                colour.B = (value >> 2) & 0x1F;
+                colour.G = (colour.G & 0x7) | ((value & 0x3) << 3);
+            }
+            else
+            {
+                colour.G = (colour.G & 0x18) | (value >> 5);
+                colour.R = value & 0x1F;
             }
         }
 
