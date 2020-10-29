@@ -577,8 +577,6 @@ namespace GbSharp.Ppu
 
                     if (CurrentScanlineCyclePosition == 456)
                     {
-                        ChangeScanline(false);
-
                         if (CurrentScanline == 143)
                         {
                             ChangePpuMode(PpuMode.VBlank);
@@ -587,6 +585,8 @@ namespace GbSharp.Ppu
                         {
                             ChangePpuMode(PpuMode.OamScan);
                         }
+
+                        ChangeScanline(false);
                     }
 
                     break;
